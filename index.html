@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="心愿卡">
+<meta name="theme-color" content="#F6F2EA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>心愿卡 · 想买之前填一张</title>
+<style>
+:root{
+  --ink:#3A3630; --ink2:#4A443C; --muted:#5C574E;
+  --accent:#703D2D; --line:#D8CCB8; --border:#E4DCCF;
+  --paper:#FFFFFF; --bg:#F6F2EA; --soft:#FBF8F2;
+  --ph:#B7AC97; --chk:#B8A88A; --barBg:#EFE8D9; --warn:#A33B22; --ok:#5E7050;
+  --badgeA:#F3E4DE; --badgeB:#E7EDE2;
+}
+html[data-theme="blue"]{
+  --ink:#2F3A46; --ink2:#42505D; --muted:#61707F;
+  --accent:#2C5F92; --line:#BCCFE2; --border:#D2DFEC;
+  --paper:#FFFFFF; --bg:#EEF3F8; --soft:#F5F9FD;
+  --ph:#9FB0C0; --chk:#9DB2C6; --barBg:#DFE8F1; --warn:#A8452E; --ok:#4A7358;
+  --badgeA:#DFE9F3; --badgeB:#E3EEE6;
+}
+html[data-theme="green"]{
+  --ink:#2E3A2E; --ink2:#42533F; --muted:#5F7060;
+  --accent:#3F6B45; --line:#B6CDAE; --border:#CEDDC8;
+  --paper:#FFFFFF; --bg:#EDF3EC; --soft:#F5FAF4;
+  --ph:#A3B69D; --chk:#A2BCA0; --barBg:#E0EBDD; --warn:#A8452E; --ok:#4A7358;
+  --badgeA:#E2EDE1; --badgeB:#E7EDE2;
+}
+.themes{display:flex; gap:6px; justify-content:center; margin-top:10px;}
+.themes button{
+  font-family:inherit; font-size:12px; padding:5px 16px; border-radius:20px;
+  border:1px solid var(--border); background:var(--paper); color:var(--muted); letter-spacing:.1em;
+}
+.themes button.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Songti SC","STSongti-SC-Regular","Noto Serif SC","Songti TC",serif;
+  padding:12px 14px calc(28px + env(safe-area-inset-bottom));
+  max-width:520px; margin:0 auto;
+  -webkit-font-smoothing:antialiased;
+}
+.head{text-align:center; padding:6px 0 2px;}
+.head .kicker{font-size:12px; letter-spacing:.35em; color:var(--muted);}
+.head h1{font-size:26px; margin:6px 0 2px; font-weight:700; letter-spacing:.12em;}
+.head .sub{font-size:13px; color:var(--muted); line-height:1.7;}
+.card{
+  background:var(--paper); border:1.5px solid var(--border); border-radius:14px;
+  padding:18px 16px 16px; margin-top:12px;
+  box-shadow:0 1px 0 rgba(58,54,48,.04);
+}
+.sec{margin-top:14px;}
+.sec:first-child{margin-top:0;}
+label.lab{display:block; font-size:13px; color:var(--ink2); margin:0 0 6px 2px;}
+input[type=text],input[type=number],input[type=date],textarea{
+  width:100%; font-size:16px; font-family:inherit; color:var(--ink);
+  background:var(--soft); border:none; border-bottom:1.5px solid var(--line);
+  border-radius:6px 6px 0 0; padding:9px 10px 8px; outline:none;
+  -webkit-appearance:none; appearance:none;
+}
+input:focus,textarea:focus{border-bottom-color:var(--accent); background:#fff;}
+textarea{min-height:64px; resize:none; line-height:1.6;}
+input[type=date]{min-height:42px;}
+input::placeholder,textarea::placeholder{color:var(--ph);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.yuan{position:relative;}
+.yuan input{padding-left:28px;}
+.yuan .sym{position:absolute; left:10px; bottom:9px; font-size:16px; color:var(--muted);}
+/* 品类分段 */
+.seg{display:flex; gap:8px; flex-wrap:wrap;}
+.seg button{
+  flex:1; min-width:70px; font-family:inherit; font-size:14px; color:var(--ink2);
+  background:var(--soft); border:1.5px solid var(--line); border-radius:8px;
+  padding:9px 4px; letter-spacing:.08em;
+}
+.seg button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+/* 三问 */
+.ask{list-style:none; margin:0; padding:0;}
+.ask li{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 4px; border-bottom:1px dashed var(--border);
+  font-size:14.5px; line-height:1.6; color:var(--ink2);
+}
+.ask li:last-child{border-bottom:none;}
+.chk{
+  flex:0 0 20px; width:20px; height:20px; margin-top:2px;
+  border:1.5px solid var(--chk); border-radius:5px; background:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; color:#fff;
+}
+.ask li.on .chk{background:var(--accent); border-color:var(--accent);}
+.ask li.on .chk::after{content:"✓";}
+.ask li.on{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--chk);}
+/* 规矩 */
+.rules{
+  background:var(--soft); border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px; font-size:12.5px; line-height:1.9; color:var(--muted);
+}
+.rules b{color:var(--accent); font-weight:700; margin-right:8px;}
+/* 闸门状态 */
+.gate{margin-top:8px; font-size:12.5px; line-height:1.9; color:var(--muted);}
+.gate .bar{height:5px; background:var(--barBg); border-radius:3px; overflow:hidden; margin:4px 0 2px;}
+.gate .bar i{display:block; height:100%; background:var(--accent); border-radius:3px;}
+.gate .warn{color:var(--warn);}
+.gate .ok{color:var(--ok);}
+/* 决定 */
+.decide{display:flex; gap:10px;}
+.decide button{
+  flex:1; font-family:inherit; font-size:15px; letter-spacing:.1em;
+  padding:11px 4px; border-radius:9px; border:1.5px solid var(--line);
+  background:var(--soft); color:var(--ink2);
+}
+.decide button.buy.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+.decide button.drop.on{background:var(--ok); border-color:var(--ok); color:#fff;}
+.saveAmt{margin-top:10px; display:none;}
+.saveAmt.show{display:block;}
+.timer{margin-top:10px; font-size:13px; color:var(--muted); text-align:center;}
+.timer b{color:var(--accent); font-weight:700;}
+/* 操作 */
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+.actions button{
+  font-family:inherit; font-size:15px; letter-spacing:.06em;
+  padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);
+}
+#btnImg{background:var(--accent); color:#fff;}
+#btnCopy{background:#fff; color:var(--accent);}
+.mini{display:flex; justify-content:space-between; margin-top:12px;}
+.mini button{
+  font-family:inherit; font-size:12.5px; color:var(--muted);
+  background:none; border:none; padding:6px 2px; text-decoration:underline;
+  text-underline-offset:3px; text-decoration-color:var(--chk);
+}
+.quote{text-align:center; font-size:12.5px; color:var(--muted); margin:16px 0 2px;}
+.nav{display:flex; justify-content:center; gap:14px; margin:10px 0 6px;}
+.nav a{font-size:12.5px; color:var(--accent); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:2px;}
+/* 档案 */
+details.arch{margin-top:14px; border-top:1.5px solid var(--border); padding-top:10px;}
+details.arch summary{
+  font-size:14px; color:var(--ink2); letter-spacing:.1em; cursor:pointer;
+  list-style:none; display:flex; justify-content:space-between; align-items:center;
+}
+details.arch summary::-webkit-details-marker{display:none;}
+details.arch summary::after{content:"⌄"; color:var(--muted);}
+details.arch[open] summary::after{content:"⌃";}
+.archItem{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:9px 2px; border-bottom:1px dashed var(--border); font-size:13.5px;
+}
+.archItem .t{flex:1; min-width:0;}
+.archItem .t .n{color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.archItem .t .m{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.badge{flex:0 0 auto; font-size:11px; padding:3px 8px; border-radius:20px; letter-spacing:.05em;}
+.badge.buy{background:var(--badgeA); color:var(--accent);}
+.badge.drop{background:var(--badgeB); color:var(--ok);}
+.archItem .del{flex:0 0 auto; background:none; border:none; color:var(--ph); font-size:15px; padding:4px 6px; font-family:inherit;}
+.empty{font-size:12.5px; color:var(--ph); padding:8px 2px;}
+/* 图片预览层 */
+#ov{
+  position:fixed; inset:0; background:rgba(40,35,28,.72); z-index:50;
+  display:none; align-items:center; justify-content:center; flex-direction:column;
+  padding:18px;
+}
+#ov.show{display:flex;}
+#ov img{max-width:100%; max-height:62vh; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.4);}
+#ov .tip{color:#F1E9DA; font-size:13px; margin:12px 0 10px; text-align:center; line-height:1.7;}
+#ov .row{display:flex; gap:10px;}
+#ov button{
+  font-family:inherit; font-size:14px; padding:10px 18px; border-radius:9px; border:none;
+}
+#ovShare{background:#fff; color:var(--ink);}
+#ovClose{background:transparent; color:#F1E9DA; border:1px solid #8C8272 !important;}
+.hint{font-size:11.5px; color:var(--ph); text-align:center; margin-top:14px; line-height:1.8;}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="kicker">CALME · 大额冷静期</div>
+  <h1>心 愿 卡</h1>
+  <div class="sub">想买单笔 ≥ ¥1,000 的东西时，先填这张卡，<br>发给闺蜜聊一轮，过 72 小时再做决定。</div>
+  <div class="themes" id="themes">
+    <button data-t="warm">米</button><button data-t="blue">蓝</button><button data-t="green">绿</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="sec">
+    <label class="lab" for="fName">我想买</label>
+    <input type="text" id="fName" placeholder="想买的东西">
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab" for="fPrice">价格</label>
+      <div class="yuan"><span class="sym">¥</span><input type="number" id="fPrice" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div>
+      <label class="lab" for="fChannel">渠道</label>
+      <input type="text" id="fChannel" placeholder="直播间 / 官网 / 门店…">
+    </div>
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab">品类</label>
+      <div class="seg" id="segCat">
+        <button data-v="护肤">护肤</button>
+        <button data-v="金饰">金饰</button>
+        <button data-v="装备">装备</button>
+        <button data-v="其他">其他</button>
+      </div>
+    </div>
+    <div>
+      <label class="lab" for="fDate">种草日期</label>
+      <input type="date" id="fDate">
+    </div>
+  </div>
+
+  <div class="sec">
+    <label class="lab" for="fWhy">为什么想要（一句话）</label>
+    <textarea id="fWhy" placeholder="一句话说清楚"></textarea>
+  </div>
+
+  <div class="sec rules">
+    <b>规矩</b>月度大额闸门 ¥3,000 ｜ 护肤囤货只走 618 / 双11（单次 ≤¥2,000）｜ 金饰季度 ¥5,000 ｜ 囤货原则：先用空再买
+    <div class="gate" id="gate"></div>
+  </div>
+
+  <div class="sec">
+    <div style="font-size:14.5px; color:var(--accent); font-weight:700; letter-spacing:.08em; margin-bottom:2px;">发给闺蜜前，先自问三句</div>
+    <ul class="ask" id="ask">
+      <li data-k="q1"><span class="chk"></span><span>这件东西，家里有没有同类还没用完的？</span></li>
+      <li data-k="q2"><span class="chk"></span><span>如果没有直播 / 没有种草，我还会想到要买它吗？</span></li>
+      <li data-k="q3"><span class="chk"></span><span>买完之后，我是会常用，还是看它？</span></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <label class="lab" for="fFriend">闺蜜讨论记录 · 她怎么看</label>
+    <textarea id="fFriend" placeholder="聊完记一笔"></textarea>
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab" for="fReview">72h 后复核</label>
+      <input type="date" id="fReview">
+    </div>
+    <div>
+      <label class="lab">最终决定</label>
+      <div class="decide">
+        <button class="buy" data-v="buy">下单</button>
+        <button class="drop" data-v="drop">放弃</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec saveAmt" id="saveAmtBox">
+    <label class="lab" for="fSaved">放弃（省下）</label>
+    <div class="yuan"><span class="sym">¥</span><input type="number" id="fSaved" inputmode="decimal" placeholder="0"></div>
+  </div>
+
+  <div class="timer" id="timer"></div>
+
+  <div class="actions">
+    <button id="btnImg">生成卡片图片</button>
+    <button id="btnCopy">复制文字版</button>
+  </div>
+
+  <div class="mini">
+    <button id="btnArch">归档这张卡</button>
+    <button id="btnClear">清空重填</button>
+  </div>
+
+  <details class="arch">
+    <summary>已归档的心愿卡 <span id="archCount" style="color:var(--muted);font-size:12.5px;"></span></summary>
+    <div id="archList"></div>
+  </details>
+
+  <div class="quote">72 小时后还想不起来这张卡，说明本来就不该买。</div>
+</div>
+
+<div class="nav"><a href="spend.html">当日消费卡 →</a><a href="record.html">种草记录卡 →</a><a href="backup.html">数据备份 →</a></div>
+<div class="hint">iPhone：Safari 打开本页 → 点底部「分享 ↑」→ 添加到主屏幕<br>之后从桌面图标进入，断网也能打开；填写内容只存在本机。</div>
+
+<div id="ov">
+  <img id="ovImg" alt="心愿卡图片">
+  <div class="tip">长按图片 → 存入照片 / 发给闺蜜</div>
+  <div class="row">
+    <button id="ovShare">分享…</button>
+    <button id="ovClose">关闭</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+var LS="calme_wishcard_v1";
+function blank(){return {id:Date.now(),name:"",price:"",channel:"",cat:"",date:"",why:"",q1:false,q2:false,q3:false,friend:"",review:"",decision:"",saved:"",created:0};}
+function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&s.cur)return s;}catch(e){}return {cur:blank(),arch:[]};}
+function save(){localStorage.setItem(LS,JSON.stringify(S));}
+var S=load();
+
+/* 从「种草记录卡」跳转过来时带过来的数据 */
+try{
+  var draft=JSON.parse(localStorage.getItem("calme_wishcard_draft")||"null");
+  if(draft){
+    Object.keys(draft).forEach(function(k){if(draft[k])S.cur[k]=draft[k];});
+    S.cur.created=Date.now();
+    if(S.cur.date){
+      var dd=new Date(S.cur.date+"T00:00:00"); dd.setDate(dd.getDate()+3);
+      S.cur.review=dd.getFullYear()+"-"+pad(dd.getMonth()+1)+"-"+pad(dd.getDate());
+    }
+    localStorage.removeItem("calme_wishcard_draft"); save();
+  }
+}catch(e){}
+
+var $=function(id){return document.getElementById(id);};
+
+/* ---------- 配色（米 / 蓝 / 绿） ---------- */
+var THEMES={
+  warm:{bg:"#F6F2EA",paper:"#FFFFFF",border:"#E4DCCF",line:"#D8CCB8",
+        ink:"#3A3630",ink2:"#4A443C",muted:"#5C574E",accent:"#703D2D",chk:"#B8A88A",ph:"#C9BFA9"},
+  blue:{bg:"#EEF3F8",paper:"#FFFFFF",border:"#D2DFEC",line:"#BCCFE2",
+        ink:"#2F3A46",ink2:"#42505D",muted:"#61707F",accent:"#2C5F92",chk:"#9DB2C6",ph:"#A8B8C7"},
+  green:{bg:"#EDF3EC",paper:"#FFFFFF",border:"#CEDDC8",line:"#B6CDAE",
+        ink:"#2E3A2E",ink2:"#42533F",muted:"#5F7060",accent:"#3F6B45",chk:"#A2BCA0",ph:"#A8BCA2"}
+};
+var TH="blue";
+try{ if(localStorage.getItem("calme_theme2")) TH=localStorage.getItem("calme_theme2"); }catch(e){}
+function applyTheme(t){
+  TH=t; try{localStorage.setItem("calme_theme2",t);}catch(e){}
+  document.documentElement.setAttribute("data-theme",t==="warm"?"":t);
+  document.querySelectorAll("#themes button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
+}
+var F={name:$("fName"),price:$("fPrice"),channel:$("fChannel"),date:$("fDate"),why:$("fWhy"),friend:$("fFriend"),review:$("fReview"),saved:$("fSaved")};
+
+/* ---------- 绑定输入 ---------- */
+Object.keys(F).forEach(function(k){
+  F[k].addEventListener("input",function(){
+    S.cur[k]=F[k].value;
+    if(k==="date"){
+      if(!S.cur.created) S.cur.created=Date.now();
+      if(!S.cur.review && S.cur.date){
+        var d=new Date(S.cur.date+"T00:00:00"); d.setDate(d.getDate()+3);
+        S.cur.review=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+        F.review.value=S.cur.review;
+      }
+    }
+    if(k==="price" && S.cur.decision==="drop" && !S.cur.saved){S.cur.saved=S.cur.price;F.saved.value=S.cur.saved;}
+    save(); render();
+  });
+});
+function pad(n){return (n<10?"0":"")+n;}
+
+/* 品类 */
+$("segCat").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return;
+  S.cur.cat=b.dataset.v; if(!S.cur.created)S.cur.created=Date.now(); save(); render();
+});
+/* 三问 */
+$("ask").addEventListener("click",function(e){
+  var li=e.target.closest("li"); if(!li)return;
+  var k=li.dataset.k; S.cur[k]=!S.cur[k]; if(!S.cur.created)S.cur.created=Date.now(); save(); render();
+});
+/* 决定 */
+document.querySelector(".decide").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return;
+  S.cur.decision=b.dataset.v;
+  if(S.cur.decision==="drop" && !S.cur.saved){S.cur.saved=S.cur.price||"";F.saved.value=S.cur.saved;}
+  if(!S.cur.created)S.cur.created=Date.now();
+  save(); render();
+});
+
+/* ---------- 渲染 ---------- */
+function fmt(n){n=parseFloat(n);return isNaN(n)?"0":n.toLocaleString("zh-CN");}
+function render(){
+  Object.keys(F).forEach(function(k){ if(F[k].value!==(S.cur[k]||""))F[k].value=S.cur[k]||""; });
+  document.querySelectorAll("#segCat button").forEach(function(b){b.classList.toggle("on",b.dataset.v===S.cur.cat);});
+  document.querySelectorAll("#ask li").forEach(function(li){li.classList.toggle("on",!!S.cur[li.dataset.k]);});
+  document.querySelector(".decide .buy").classList.toggle("on",S.cur.decision==="buy");
+  document.querySelector(".decide .drop").classList.toggle("on",S.cur.decision==="drop");
+  $("saveAmtBox").classList.toggle("show",S.cur.decision==="drop");
+  renderGate(); renderTimer(); renderArch();
+}
+
+function stats(){
+  var now=new Date(), ym=now.getFullYear()+"-"+pad(now.getMonth()+1);
+  var q=Math.floor(now.getMonth()/3), qStart=new Date(now.getFullYear(),q*3,1);
+  var mSum=0, qGold=0;
+  S.arch.forEach(function(c){
+    if(c.decision!=="buy")return;
+    var p=parseFloat(c.price)||0;
+    if((c.review||c.date||"").slice(0,7)===ym) mSum+=p;
+    var d=c.date?new Date(c.date+"T00:00:00"):null;
+    if(d&&d>=qStart&&c.cat==="金饰") qGold+=p;
+  });
+  return {mSum:mSum,qGold:qGold};
+}
+
+function renderGate(){
+  var st=stats(), g=$("gate"), h="";
+  var pct=Math.min(100,Math.round(st.mSum/3000*100));
+  h+='<div>本月大额已下单：<b style="color:var(--accent)">¥'+fmt(st.mSum)+'</b> / ¥3,000</div>';
+  h+='<div class="bar"><i style="width:'+pct+'%"></i></div>';
+  var p=parseFloat(S.cur.price)||0;
+  if(S.cur.decision==="buy"){
+    var after=st.mSum+p;
+    h+= after>3000
+      ? '<div class="warn">⚠️ 加上这张就到 ¥'+fmt(after)+'，超过本月闸门 ¥3,000，三思。</div>'
+      : '<div class="ok">✓ 加上这张 ¥'+fmt(after)+'，仍在本月闸门内。</div>';
+  }
+  if(S.cur.cat==="护肤"&&S.cur.date){
+    var md=S.cur.date.slice(5);
+    var promo=(md>="05-31"&&md<="06-20")||(md>="10-20"&&md<="11-11");
+    if(!promo) h+='<div class="warn">⚠️ 规矩：护肤囤货只走 618 / 双11，现在不是窗口期。</div>';
+    else h+='<div class="ok">✓ 在 618 / 双11 窗口内，单次 ≤¥2,000。</div>';
+    if(p>2000) h+='<div class="warn">⚠️ 单次超过 ¥2,000，超了护肤囤货上限。</div>';
+  }
+  if(S.cur.cat==="金饰"){
+    var after=st.qGold+p;
+    h+= after>5000
+      ? '<div class="warn">⚠️ 金饰本季度将达 ¥'+fmt(after)+'，超过季度 ¥5,000。</div>'
+      : '<div class="ok">✓ 金饰本季度 ¥'+fmt(after)+' / ¥5,000。</div>';
+  }
+  g.innerHTML=h;
+}
+
+function renderTimer(){
+  var t=$("timer"), c=S.cur.created;
+  if(!c){t.innerHTML="填下第一笔后，72 小时冷静期开始计时。";return;}
+  var left=c+72*3600*1000-Date.now();
+  if(left>0){
+    var h=Math.floor(left/3600000), m=Math.floor(left%3600000/60000);
+    t.innerHTML="72h 冷静期 · 还剩 <b>"+h+" 小时 "+m+" 分</b>，先去问问闺蜜。";
+  }else{
+    t.innerHTML="✓ 已过 72 小时，可以复核做决定了。<b>"+(S.cur.review?"("+S.cur.review+")":"")+"</b>";
+  }
+}
+
+function renderArch(){
+  var L=$("archList"); $("archCount").textContent=S.arch.length?("("+S.arch.length+")"):"";
+  if(!S.arch.length){L.innerHTML='<div class="empty">还没有归档的卡。</div>';return;}
+  L.innerHTML=S.arch.map(function(c,i){
+    var cls=c.decision==="buy"?"buy":"drop";
+    var tag=c.decision==="buy"?"下单 ¥"+fmt(c.price):"省下 ¥"+fmt(c.saved||c.price);
+    return '<div class="archItem"><div class="t"><div class="n">'+esc(c.name||"未命名")+'</div>'+
+      '<div class="m">'+esc(c.cat||"")+" · "+esc(c.date||"")+'</div></div>'+
+      '<span class="badge '+cls+'">'+tag+'</span>'+
+      '<button class="del" data-i="'+i+'">✕</button></div>';
+  }).join("");
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+$("archList").addEventListener("click",function(e){
+  var b=e.target.closest(".del"); if(!b)return;
+  S.arch.splice(+b.dataset.i,1); save(); render();
+});
+
+/* ---------- 归档 / 清空 ---------- */
+$("btnArch").addEventListener("click",function(){
+  if(!S.cur.decision){alert("先选「下单」或「放弃」，再归档这张卡。");return;}
+  S.arch.unshift(JSON.parse(JSON.stringify(S.cur)));
+  S.cur=blank(); save(); render();
+  alert("已归档，可以填下一张了。");
+});
+$("btnClear").addEventListener("click",function(){
+  if(confirm("清空当前这张卡？")){S.cur=blank();save();render();}
+});
+
+/* ---------- 文字版 ---------- */
+function textVersion(){
+  var c=S.cur, marks=["①","②","③"];
+  var asks=[c.q1,c.q2,c.q3].map(function(v,i){return marks[i]+(v?"☑":"☐");}).join(" ");
+  var lines=[
+    "🛍 心愿卡 · 想买之前填一张",
+    "想买："+(c.name||""),
+    "价格：¥"+fmt(c.price),
+    "渠道："+(c.channel||"")+"｜品类："+(c.cat||""),
+    "种草日期："+(c.date||""),
+    "为什么想要："+(c.why||""),
+    "自问三句："+asks,
+    "闺蜜怎么看："+(c.friend||"(等你聊)"),
+    "72h 后复核："+(c.review||""),
+    "最终决定："+(c.decision==="buy"?"下单":c.decision==="drop"?"放弃（省下 ¥"+fmt(c.saved||c.price)+"）":"待定")
+  ];
+  return lines.join("\n");
+}
+$("btnCopy").addEventListener("click",function(){
+  var t=textVersion();
+  function fb(){
+    var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);
+    ta.select();try{document.execCommand("copy");alert("已复制，去微信粘贴给闺蜜吧。");}catch(e){alert("复制失败，请手动选择文字。");}
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){alert("已复制，去微信粘贴给闺蜜吧。");},fb);
+  }else fb();
+});
+
+/* ---------- 卡片图片（还原 PDF 版式） ---------- */
+function drawCard(){
+  var c=S.cur, W=1080, H=1840, cv=document.createElement("canvas");
+  var dpr=Math.min(3,window.devicePixelRatio||1)*1.5|0||2;
+  cv.width=W; cv.height=H;
+  var x=cv.getContext("2d");
+  var P=THEMES[TH]||THEMES.warm;
+  x.fillStyle=P.bg; x.fillRect(0,0,W,H);
+  /* 中间白色卡片 */
+  var CX=60, CY=60, CW=W-120, CH=H-120, CR=24;
+  x.save();
+  x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
+  x.fillStyle="#FFFFFF"; roundRectF(x,CX,CY,CW,CH,CR); x.fill();
+  x.restore();
+  x.strokeStyle=P.border; x.lineWidth=2; roundRectF(x,CX,CY,CW,CH,CR); x.stroke();
+  var M=CX+44, IW=W-M*2, ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
+  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
+  function wrap(t,font,maxW){
+    x.font=font; var out=[],cur="";
+    for(var i=0;i<t.length;i++){
+      if(t[i]==="\n"){out.push(cur);cur="";continue;}
+      if(x.measureText(cur+t[i]).width>maxW){out.push(cur);cur=t[i];}else cur+=t[i];
+    }
+    if(cur)out.push(cur); return out;
+  }
+  function underLines(y0,n,gap){ x.strokeStyle=line; x.lineWidth=2;
+    for(var i=0;i<n;i++){x.beginPath();x.moveTo(M,y0+i*gap);x.lineTo(M+IW,y0+i*gap);x.stroke();}
+  }
+  var y=CY+96;
+  /* 标题 */
+  x.fillStyle=ink; x.font="700 62px "+SER; x.fillText("心愿卡",M,y);
+  y+=64;
+  x.fillStyle=ink; x.font="26px "+SER;
+  wrap("想买单笔 ≥¥1,000 的东西时，先填这张卡，发给闺蜜聊一轮，过 72 小时再做决定。","26px "+SER,IW+20)
+    .forEach(function(l){x.fillText(l,M,y);y+=44;});
+  y+=36;
+  /* 字段 */
+  function field(lab,val,ph){
+    x.fillStyle=ink2c(); x.font="24px "+SER; x.fillText(lab,M,y); y+=46;
+    x.fillStyle=ink; x.font="30px "+SER;
+    var v=val||""; if(!v){x.fillStyle=P.ph;v=ph||"";}
+    var ls=wrap(v,"30px "+SER,IW);
+    ls.slice(0,2).forEach(function(l){x.fillText(l,M,y);y+=48;});
+    if(ls.length>2)y+=(ls.length-2)*0;
+    x.strokeStyle=line;x.lineWidth=2;x.beginPath();x.moveTo(M,y-16);x.lineTo(M+IW,y-16);x.stroke();
+    y+=36;
+  }
+  function ink2c(){return P.ink2;}
+  field("我想买",c.name,"");
+  /* 价格 + 渠道 双栏 */
+  var colW=(IW-40)/2;
+  x.fillStyle=ink2c();x.font="24px "+SER;
+  x.fillText("价格",M,y); x.fillText("渠道",M+colW+40,y); y+=46;
+  x.fillStyle=ink;x.font="30px "+SER;
+  x.fillStyle=c.price?P.ink:P.ph;
+  x.fillText("¥ "+(c.price?fmt(c.price):"＿＿"),M,y);
+  x.fillStyle=c.channel?P.ink:P.ph;
+  x.fillText(c.channel||"＿＿",M+colW+40,y);
+  x.strokeStyle=line;x.lineWidth=2;
+  x.beginPath();x.moveTo(M,y+18);x.lineTo(M+colW,y+18);x.stroke();
+  x.beginPath();x.moveTo(M+colW+40,y+18);x.lineTo(M+IW,y+18);x.stroke();
+  y+=92;
+  /* 品类 + 种草日期 */
+  x.fillStyle=ink2c();x.font="24px "+SER;
+  x.fillText("品类",M,y); x.fillText("种草日期",M+colW+40,y); y+=46;
+  x.fillStyle=c.cat?acc:P.ph; x.font="30px "+SER;
+  x.fillText(c.cat||"护肤 / 金饰 / 装备 / 其他",M,y);
+  x.fillStyle=c.date?P.ink:P.ph;
+  x.fillText(c.date||"＿＿",M+colW+40,y);
+  x.strokeStyle=line;
+  x.beginPath();x.moveTo(M,y+18);x.lineTo(M+colW,y+18);x.stroke();
+  x.beginPath();x.moveTo(M+colW+40,y+18);x.lineTo(M+IW,y+18);x.stroke();
+  y+=92;
+  field("为什么想要（一句话）",c.why,"");
+  /* 规矩 */
+  y+=6;
+  x.fillStyle=acc;x.font="700 26px "+SER;x.fillText("规矩",M,y);
+  x.fillStyle=mut;x.font="24px "+SER;
+  var rl=wrap("月度大额闸门 ¥3,000 ｜ 护肤囤货只走 618 / 双11（单次 ≤¥2,000）｜ 金饰季度 ¥5,000 ｜ 囤货原则：先用空再买","24px "+SER,IW-150);
+  var ry=y-24; rl.forEach(function(l){ry+=40;x.fillText(l,M+130,ry);});
+  y=Math.max(y+40,ry)+40;
+  /* 三问 */
+  x.fillStyle=acc;x.font="700 30px "+SER;x.fillText("发给闺蜜前，先自问三句",M,y); y+=58;
+  var qs=["这件东西，家里有没有同类还没用完的？","如果没有直播 / 没有种草，我还会想到要买它吗？","买完之后，我是会常用，还是看它？"];
+  var keys=["q1","q2","q3"];
+  qs.forEach(function(q,i){
+    var on=c[keys[i]];
+    x.strokeStyle=on?acc:P.chk; x.lineWidth=2.5;
+    roundRect(x,M,y-26,30,30,6); x.stroke();
+    if(on){x.fillStyle=acc;x.font="700 26px "+SER;x.fillText("✓",M+5,y-2);}
+    x.fillStyle=on?mut:ink; x.font="26px "+SER;
+    wrap(q,"26px "+SER,IW-70).forEach(function(l,j){x.fillText(l,M+52,y+j*40);});
+    y+=44*wrap(q,"26px "+SER,IW-70).length+26;
+  });
+  y+=8;
+  /* 闺蜜 */
+  x.fillStyle=acc;x.font="700 30px "+SER;x.fillText("闺蜜讨论记录",M,y); y+=54;
+  x.fillStyle=mut;x.font="26px "+SER;x.fillText("她怎么看：",M,y);
+  var fl=c.friend?wrap(c.friend,"26px "+SER,IW):["",""];
+  fl.slice(0,2).forEach(function(l,j){x.fillStyle=c.friend?ink:P.ph;x.fillText(l,M,y+(j+1)*52);});
+  underLines(y+66,2,52); y+=150;
+  /* 复核 + 决定 */
+  x.fillStyle=ink;x.font="26px "+SER;
+  x.fillText("72h 后复核（ "+(c.review?c.review.replace(/-/g," / "):"月　日")+" ）",M,y);
+  x.fillStyle=ink2c();x.font="700 26px "+SER;
+  x.fillText("最终决定",M+colW+40,y); y+=56;
+  x.fillStyle=c.review?ink:P.ph;x.font="30px "+SER;
+  x.fillText(c.review?"":"",M,y);
+  x.strokeStyle=line;x.beginPath();x.moveTo(M,y+14);x.lineTo(M+colW,y+14);x.stroke();
+  /* 决定复选 */
+  function chk(bx,txt,on){
+    x.strokeStyle=on?acc:P.chk;x.lineWidth=2.5;roundRect(x,bx,y-24,28,28,6);x.stroke();
+    if(on){x.fillStyle=acc;x.font="700 24px "+SER;x.fillText("✓",bx+5,y-2);}
+    x.fillStyle=on?ink:mut;x.font="26px "+SER;x.fillText(txt,bx+40,y);
+  }
+  var cx0=M+colW+40;
+  chk(cx0,"下单",c.decision==="buy");
+  chk(cx0+150,"放弃（省下 ¥"+(c.saved||c.price?fmt(c.saved||c.price):"＿＿")+"）",c.decision==="drop");
+  y+=70;
+  /* 底部 */
+  x.fillStyle=mut;x.font="24px "+SER;
+  x.textAlign="center";
+  x.fillText("72 小时后还想不起来这张卡，说明本来就不该买。",W/2,H-140);
+  x.fillStyle=P.ph;x.font="22px "+SER;
+  x.fillText("Calme · 大额冷静期　"+now(),W/2,H-100);
+  x.textAlign="left";
+  function now(){var d=new Date();return d.getFullYear()+"/"+pad(d.getMonth()+1)+"/"+pad(d.getDate());}
+  return cv;
+}
+function roundRectF(x,a,b,w,h,r){
+  x.beginPath();
+  x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r);
+  x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath();
+}
+function roundRect(x,a,b,w,h,r){
+  x.beginPath();
+  x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);
+  x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();
+}
+
+$("btnImg").addEventListener("click",function(){
+  var cv=drawCard();
+  cv.toBlob(function(blob){
+    lastBlob=blob;
+    var url=URL.createObjectURL(blob);
+    $("ovImg").src=url; $("ov").classList.add("show");
+  },"image/png");
+});
+var lastBlob=null;
+$("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
+$("ovShare").addEventListener("click",function(){
+  if(!lastBlob)return;
+  var file=new File([lastBlob],"心愿卡.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:"心愿卡"}).catch(function(){});
+  }else{
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(lastBlob); a.download="心愿卡.png";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    alert("已开始下载，可在「文件」App 里查看后分享。");
+  }
+});
+
+document.getElementById("themes").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; applyTheme(b.dataset.t);
+});
+applyTheme(TH);
+
+render();
+
+/* 离线缓存：添加到主屏幕后断网也能打开 */
+if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+  window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+}
+</script>
+</body>
+</html>
