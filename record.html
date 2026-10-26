@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="种草记录">
+<meta name="theme-color" content="#F6F2EA">
+<title>种草记录卡</title>
+<style>
+:root{
+  --ink:#3A3630; --ink2:#4A443C; --muted:#5C574E;
+  --accent:#703D2D; --line:#D8CCB8; --border:#E4DCCF;
+  --paper:#FFFFFF; --bg:#F6F2EA; --soft:#FBF8F2;
+  --ok:#5E7050; --ph:#B7AC97; --chk:#B8A88A; --warn:#A33B22;
+  --badgeA:#F3E4DE; --badgeB:#E7EDE2; --badgeC:#EDEAE4;
+}
+html[data-theme="blue"]{
+  --ink:#2F3A46; --ink2:#42505D; --muted:#61707F;
+  --accent:#2C5F92; --line:#BCCFE2; --border:#D2DFEC;
+  --paper:#FFFFFF; --bg:#EEF3F8; --soft:#F5F9FD;
+  --ok:#4A7358; --ph:#9FB0C0; --chk:#9DB2C6; --warn:#A8452E;
+  --badgeA:#DFE9F3; --badgeB:#E3EEE6; --badgeC:#E8EBEF;
+}
+html[data-theme="green"]{
+  --ink:#2E3A2E; --ink2:#42533F; --muted:#5F7060;
+  --accent:#3F6B45; --line:#B6CDAE; --border:#CEDDC8;
+  --paper:#FFFFFF; --bg:#EDF3EC; --soft:#F5FAF4;
+  --ok:#4A7358; --ph:#A3B69D; --chk:#A2BCA0; --warn:#A8452E;
+  --badgeA:#E2EDE1; --badgeB:#E7EDE2; --badgeC:#EDEAE4;
+}
+.themes{display:flex; gap:6px; justify-content:center; margin-top:10px;}
+.themes button{
+  font-family:inherit; font-size:12px; padding:5px 16px; border-radius:20px;
+  border:1px solid var(--border); background:var(--paper); color:var(--muted); letter-spacing:.1em;
+}
+.themes button.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Songti SC","STSongti-SC-Regular","Noto Serif SC","Songti TC",serif;
+  padding:12px 14px calc(28px + env(safe-area-inset-bottom));
+  max-width:520px; margin:0 auto; -webkit-font-smoothing:antialiased;
+}
+.head{text-align:center; padding:6px 0 2px;}
+.head .kicker{font-size:12px; letter-spacing:.35em; color:var(--muted);}
+.head h1{font-size:26px; margin:6px 0 2px; font-weight:700; letter-spacing:.12em;}
+.head .sub{font-size:13px; color:var(--muted); line-height:1.7;}
+.card{background:var(--paper); border:1.5px solid var(--border); border-radius:14px; padding:18px 16px 16px; margin-top:12px;}
+.sec{margin-top:14px;} .sec:first-child{margin-top:0;}
+label.lab{display:block; font-size:13px; color:var(--ink2); margin:0 0 6px 2px;}
+input[type=text],input[type=number],input[type=date],textarea,select{
+  width:100%; font-size:16px; font-family:inherit; color:var(--ink);
+  background:var(--soft); border:none; border-bottom:1.5px solid var(--line);
+  border-radius:6px 6px 0 0; padding:9px 10px 8px; outline:none; -webkit-appearance:none; appearance:none;
+}
+input:focus,textarea:focus{border-bottom-color:var(--accent); background:#fff;}
+textarea{min-height:56px; resize:none; line-height:1.6;}
+input[type=date]{min-height:42px;}
+input::placeholder,textarea::placeholder{color:var(--ph);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.yuan{position:relative;} .yuan input{padding-left:28px;}
+.yuan .sym{position:absolute; left:10px; bottom:9px; font-size:16px; color:var(--muted);}
+.seg{display:flex; gap:8px; flex-wrap:wrap;}
+.seg button{flex:1; min-width:66px; font-family:inherit; font-size:14px; color:var(--ink2);
+  background:var(--soft); border:1.5px solid var(--line); border-radius:8px; padding:9px 4px;}
+.seg button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+/* 照片 */
+.photoBox{display:flex; gap:12px; align-items:flex-start;}
+.photoPrev{
+  flex:0 0 96px; width:96px; height:96px; border-radius:10px; border:1.5px dashed var(--line);
+  background:var(--soft); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  color:var(--ph); font-size:12px; text-align:center; line-height:1.5;
+}
+.photoPrev img{width:100%; height:100%; object-fit:cover; display:block;}
+.photoBtns{flex:1; display:flex; flex-direction:column; gap:8px;}
+.photoBtns button,.linkBtn{
+  font-family:inherit; font-size:14px; padding:10px 12px; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2); width:100%;
+}
+.photoBtns button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+.hintline{font-size:11.5px; color:var(--ph); line-height:1.6; margin-top:2px;}
+/* 优惠计算 */
+.calc{margin-top:12px; background:var(--soft); border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
+.calc .row{display:flex; justify-content:space-between; font-size:13px; color:var(--muted); line-height:2;}
+.calc .row.big{font-size:22px; color:var(--accent); font-weight:700; line-height:1.6; margin-top:2px;}
+.calc .row .v{color:var(--ink);}
+.calc .row.big .v{color:var(--accent);}
+.giftRow{display:flex; gap:8px; align-items:center; margin-top:8px;}
+.giftRow .seg{flex:1;}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+.actions button{font-family:inherit; font-size:15px; letter-spacing:.06em; padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);}
+#btnSave{background:var(--accent); color:#fff;}
+#btnReset{background:#fff; color:var(--accent);}
+/* 列表 */
+.listTitle{display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-size:14px; color:var(--ink2); letter-spacing:.1em;}
+.listTitle .c{font-size:12.5px; color:var(--muted);}
+.item{display:flex; gap:12px; padding:12px 0; border-bottom:1px dashed var(--border); align-items:flex-start;}
+.item .thumb{flex:0 0 62px; width:62px; height:62px; border-radius:9px; overflow:hidden; background:var(--soft); border:1px solid var(--border);}
+.item .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+.item .info{flex:1; min-width:0;}
+.item .info .n{font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.item .info .p{font-size:18px; color:var(--accent); font-weight:700; margin-top:3px;}
+.item .info .p s{font-size:12px; color:var(--muted); font-weight:400; margin-left:6px;}
+.item .info .m{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.7;}
+.item .ops{flex:0 0 auto; display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
+.item .ops button{font-family:inherit; font-size:11.5px; padding:5px 9px; border-radius:7px; border:1px solid var(--line); background:#fff; color:var(--ink2);}
+.item .ops .del{border-color:var(--border); color:var(--ph);}
+.st{flex:0 0 auto; font-size:11px; padding:3px 8px; border-radius:20px;}
+.st.want{background:var(--badgeA); color:var(--accent);}
+.st.bought{background:var(--badgeB); color:var(--ok);}
+.st.drop{background:var(--badgeC); color:var(--muted);}
+.empty{font-size:12.5px; color:var(--ph); padding:14px 2px; text-align:center;}
+.quote{text-align:center; font-size:12.5px; color:var(--muted); margin:16px 0 2px;}
+.nav{display:flex; justify-content:center; gap:14px; margin-top:6px;}
+.nav a{font-size:12.5px; color:var(--accent); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:2px;}
+/* 预览层 */
+#ov{position:fixed; inset:0; background:rgba(40,35,28,.72); z-index:50; display:none; flex-direction:column;
+  align-items:center; justify-content:center; padding:18px;}
+#ov.show{display:flex;}
+#ov img{max-width:100%; max-height:62vh; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.4);}
+#ov .tip{color:#F1E9DA; font-size:13px; margin:12px 0 10px; text-align:center; line-height:1.7;}
+#ov .row{display:flex; gap:10px;}
+#ov button{font-family:inherit; font-size:14px; padding:10px 18px; border-radius:9px; border:none;}
+#ovShare{background:#fff; color:var(--ink);}
+#ovClose{background:transparent; color:#F1E9DA; border:1px solid #8C8272 !important;}
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:34px; background:rgba(58,54,48,.92); color:#F6F2EA;
+  font-size:13px; padding:10px 16px; border-radius:9px; opacity:0; transition:opacity .25s; z-index:99; pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="kicker">CALME · 种草档案</div>
+  <h1>种 草 记 录 卡</h1>
+  <div class="sub">看到想买的东西，先拍张照、记下当场的价格与优惠，<br>冷静下来再决定要不要下单。</div>
+  <div class="themes" id="themes">
+    <button data-t="warm">米</button><button data-t="blue">蓝</button><button data-t="green">绿</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="sec">
+    <label class="lab">照片（拍照 / 从相册选）</label>
+    <div class="photoBox">
+      <div class="photoPrev" id="prev"><span>无照片</span></div>
+      <div class="photoBtns">
+        <input type="file" id="file" accept="image/*" hidden>
+        <button id="btnPhoto">选择照片</button>
+        <button id="btnCam">拍照</button>
+      </div>
+    </div>
+    <div class="hintline">照片存在手机本地，不会上传。</div>
+  </div>
+
+  <div class="sec">
+    <label class="lab" for="fName">东西是什么</label>
+    <input type="text" id="fName" placeholder="名称 / 型号">
+  </div>
+
+  <div class="sec">
+    <label class="lab">品类</label>
+    <div class="seg" id="segCat">
+      <button data-v="护肤">护肤</button>
+      <button data-v="金饰">金饰</button>
+      <button data-v="装备">装备</button>
+      <button data-v="其他">其他</button>
+    </div>
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab" for="fPrice">当时查看的价格</label>
+      <div class="yuan"><span class="sym">¥</span><input type="number" id="fPrice" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div>
+      <label class="lab" for="fDisc">优惠了多少</label>
+      <div class="yuan"><span class="sym">¥</span><input type="number" id="fDisc" inputmode="decimal" placeholder="0"></div>
+    </div>
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab" for="fChannel">渠道</label>
+      <input type="text" id="fChannel" placeholder="直播间 / 官网 / 门店">
+    </div>
+    <div>
+      <label class="lab" for="fDate">记录日期</label>
+      <input type="date" id="fDate">
+    </div>
+  </div>
+
+  <div class="sec">
+    <label class="lab">有没有赠品</label>
+    <div class="giftRow">
+      <div class="seg" id="segGift">
+        <button data-v="无">无</button>
+        <button data-v="有">有</button>
+      </div>
+    </div>
+    <input type="text" id="fGift" placeholder="赠品内容（小样 / 赠品杯…）" style="margin-top:8px;">
+  </div>
+
+  <div class="sec calc" id="calc"></div>
+
+  <div class="sec">
+    <label class="lab" for="fNote">备注</label>
+    <textarea id="fNote" placeholder="为什么想要 / 现货还是预售 / 什么时候有活动…"></textarea>
+  </div>
+
+  <div class="actions">
+    <button id="btnSave">保存这条</button>
+    <button id="btnReset">清空</button>
+  </div>
+</div>
+
+<div class="listTitle">
+  <span>已记录的种草</span>
+  <span class="c" id="count"></span>
+</div>
+<div class="card" id="listCard">
+  <div id="list"></div>
+</div>
+
+<div class="quote">记下来的价格，过几天再看往往就凉了。</div>
+<div class="nav">
+  <a href="spend.html">当日消费卡 →</a>
+  <a href="index.html">去填 72h 心愿卡 →</a>
+  <a href="backup.html">数据备份 →</a>
+</div>
+
+<div id="ov">
+  <img id="ovImg" alt="记录卡图片">
+  <div class="tip">长按图片 → 存入照片 / 发给闺蜜</div>
+  <div class="row">
+    <button id="ovShare">分享…</button>
+    <button id="ovClose">关闭</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var LS="calme_wishlog_v1";
+var $=function(id){return document.getElementById(id);};
+function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&s.items)return s;}catch(e){}return {items:[]};}
+function save(){localStorage.setItem(LS,JSON.stringify(D));}
+var D=load();
+
+/* ---------- 配色（米 / 蓝 / 绿） ---------- */
+var THEMES={
+  warm:{bg:"#F6F2EA",paper:"#FFFFFF",border:"#E4DCCF",line:"#D8CCB8",
+        ink:"#3A3630",ink2:"#4A443C",muted:"#5C574E",accent:"#703D2D",chk:"#B8A88A",ph:"#C9BFA9"},
+  blue:{bg:"#EEF3F8",paper:"#FFFFFF",border:"#D2DFEC",line:"#BCCFE2",
+        ink:"#2F3A46",ink2:"#42505D",muted:"#61707F",accent:"#2C5F92",chk:"#9DB2C6",ph:"#A8B8C7"},
+  green:{bg:"#EDF3EC",paper:"#FFFFFF",border:"#CEDDC8",line:"#B6CDAE",
+        ink:"#2E3A2E",ink2:"#42533F",muted:"#5F7060",accent:"#3F6B45",chk:"#A2BCA0",ph:"#A8BCA2"}
+};
+var TH="blue";
+try{ if(localStorage.getItem("calme_theme2")) TH=localStorage.getItem("calme_theme2"); }catch(e){}
+function applyTheme(t){
+  TH=t; try{localStorage.setItem("calme_theme2",t);}catch(e){}
+  document.documentElement.setAttribute("data-theme",t==="warm"?"":t);
+  document.querySelectorAll("#themes button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
+}
+var cur={photo:"",name:"",cat:"",price:"",disc:"",channel:"",date:"",gift:"无",giftText:"",note:""};
+
+/* ---------- 照片 ---------- */
+var fileInput=$("file"), camMode=false;
+$("btnPhoto").addEventListener("click",function(){camMode=false;fileInput.removeAttribute("capture");fileInput.click();});
+$("btnCam").addEventListener("click",function(){camMode=true;fileInput.setAttribute("capture","environment");fileInput.click();});
+fileInput.addEventListener("change",function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f)return;
+  var fr=new FileReader();
+  fr.onload=function(ev){
+    var im=new Image();
+    im.onload=function(){
+      var max=900, w=im.width, h=im.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+      var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      var cx=cv.getContext("2d"); cx.drawImage(im,0,0,w,h);
+      cur.photo=cv.toDataURL("image/jpeg",0.82);
+      render();
+    };
+    im.src=ev.target.result;
+  };
+  fr.readAsDataURL(f);
+  fileInput.value="";
+});
+function renderPhoto(){
+  var p=$("prev");
+  if(cur.photo){p.innerHTML='<img src="'+cur.photo+'" alt="照片">';}
+  else{p.innerHTML="<span>无照片</span>";}
+}
+
+/* ---------- 表单 ---------- */
+var F={name:$("fName"),price:$("fPrice"),disc:$("fDisc"),channel:$("fChannel"),date:$("fDate"),giftText:$("fGift"),note:$("fNote")};
+Object.keys(F).forEach(function(k){
+  F[k].addEventListener("input",function(){cur[k]=F[k].value;renderCalc();});
+});
+$("segCat").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; cur.cat=b.dataset.v; render();
+});
+$("segGift").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; cur.gift=b.dataset.v; render();
+});
+function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString("zh-CN");}
+function renderCalc(){
+  var p=num(cur.price), d=num(cur.disc), net=Math.max(0,p-d);
+  var h='<div class="row"><span>查看价</span><span class="v">¥'+fmt(p)+'</span></div>';
+  if(d>0){
+    h+='<div class="row"><span>优惠</span><span class="v">−¥'+fmt(d)+(p>0?'（'+(Math.round(net/p*100)/10).toFixed(1)+' 折）':'')+'</span></div>';
+  }
+  h+='<div class="row big"><span>到手价</span><span class="v">¥'+fmt(net)+'</span></div>';
+  if(net>=1000){h+='<div class="row" style="color:var(--warn)">⚠️ 超过 ¥1,000，建议去填 72h 心愿卡。</div>';}
+  $("calc").innerHTML=h;
+}
+function render(){
+  Object.keys(F).forEach(function(k){if(F[k].value!==(cur[k]||""))F[k].value=cur[k]||"";});
+  document.querySelectorAll("#segCat button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.cat);});
+  document.querySelectorAll("#segGift button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.gift);});
+  $("fGift").style.display=(cur.gift==="有")?"":"none";
+  renderPhoto(); renderCalc(); renderList();
+}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1800);}
+
+$("btnSave").addEventListener("click",function(){
+  if(!cur.name&&!cur.photo){toast("至少写个名字或加张照片");return;}
+  var it=JSON.parse(JSON.stringify(cur));
+  it.id=Date.now(); it.status="want"; it.date=cur.date||today();
+  D.items.unshift(it); save();
+  cur={photo:"",name:"",cat:"",price:"",disc:"",channel:"",date:"",gift:"无",giftText:"",note:""};
+  render(); toast("已保存");
+});
+$("btnReset").addEventListener("click",function(){
+  if(confirm("清空当前填写？")){cur={photo:"",name:"",cat:"",price:"",disc:"",channel:"",date:"",gift:"无",giftText:"",note:""};render();}
+});
+function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
+$("fDate").value=today(); cur.date=today();
+
+/* ---------- 列表 ---------- */
+var ST={want:"想要",bought:"已下单",drop:"放弃"};
+function renderList(){
+  $("count").textContent=D.items.length?("共 "+D.items.length+" 条"):"";
+  var L=$("list");
+  if(!D.items.length){L.innerHTML='<div class="empty">还没有记录。看到心动的东西，先记一条。</div>';return;}
+  L.innerHTML=D.items.map(function(it,i){
+    var p=num(it.price), d=num(it.disc), net=Math.max(0,p-d);
+    var thumb=it.photo?'<img src="'+it.photo+'" alt="">':'';
+    var gift=(it.gift==="有"&&it.giftText)?'赠品：'+esc(it.giftText):(it.gift==="有"?"有赠品":"");
+    return '<div class="item">'+
+      '<div class="thumb">'+thumb+'</div>'+
+      '<div class="info">'+
+        '<div class="n">'+esc(it.name||"未命名")+'</div>'+
+        '<div class="p">¥'+fmt(net)+(d>0?'<s>¥'+fmt(p)+'</s>':'')+'</div>'+
+        '<div class="m">'+[esc(it.cat||""),esc(it.channel||""),esc(it.date||""),esc(gift)].filter(Boolean).join(" ｜ ")+'</div>'+
+        (it.note?'<div class="m">'+esc(it.note)+'</div>':'')+
+      '</div>'+
+      '<div class="ops">'+
+        '<span class="st '+it.status+'">'+ST[it.status]+'</span>'+
+        '<button data-a="st" data-i="'+i+'">改状态</button>'+
+        '<button data-a="img" data-i="'+i+'">生成图</button>'+
+        '<button data-a="wish" data-i="'+i+'">填心愿卡</button>'+
+        '<button class="del" data-a="del" data-i="'+i+'">删除</button>'+
+      '</div></div>';
+  }).join("");
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+$("list").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return;
+  var i=+b.dataset.i, it=D.items[i], a=b.dataset.a;
+  if(a==="del"){ if(confirm("删除这条记录？")){D.items.splice(i,1);save();render();} return; }
+  if(a==="st"){
+    var order=["want","bought","drop"], nx=order[(order.indexOf(it.status)+1)%3];
+    it.status=nx; save(); render(); return;
+  }
+  if(a==="img"){ exportImg(it); return; }
+  if(a==="wish"){
+    try{
+      localStorage.setItem("calme_wishcard_draft",JSON.stringify({
+        name:it.name||"", price:String(Math.max(0,num(it.price)-num(it.disc)))||"",
+        channel:it.channel||"", cat:it.cat||"", date:it.date||""
+      }));
+    }catch(err){}
+    location.href="index.html";
+  }
+});
+
+/* ---------- 生成卡片图片 ---------- */
+function loadImg(src){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im);};im.onerror=rej;im.src=src;});}
+function exportImg(it){
+  var p=num(it.price), d=num(it.disc), net=Math.max(0,p-d);
+  var W=1080, H=1480, cv=document.createElement("canvas");
+  cv.width=W; cv.height=H;
+  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
+  var P=THEMES[TH]||THEMES.warm;
+  var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
+  var x=cv.getContext("2d");
+  x.fillStyle=P.bg; x.fillRect(0,0,W,H);
+  /* 中间白色卡片 */
+  var CX=60, CY=60, CW=W-120, CH=H-120;
+  x.save();
+  x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
+  x.fillStyle="#FFFFFF"; rrect(x,CX,CY,CW,CH,24); x.fill();
+  x.restore();
+  x.strokeStyle=brd; x.lineWidth=2; rrect(x,CX,CY,CW,CH,24); x.stroke();
+  var M=CX+44, IW=W-M*2;
+
+  var ph=540, py=CY+44;
+  if(it.photo){
+    loadImg(it.photo).then(function(im){
+      drawCover(x,im,M,py,IW,ph);
+      rest();
+    }).catch(rest);
+  }else{
+    x.fillStyle=P.bg; x.fillRect(M,py,IW,ph);
+    x.strokeStyle=P.border; x.lineWidth=2; rrect(x,M,py,IW,ph,14); x.stroke();
+    x.fillStyle=P.ph; x.font="34px "+SER; x.textAlign="center";
+    x.fillText("（未附照片）",W/2,py+ph/2); x.textAlign="left";
+    rest();
+  }
+  function rest(){
+    var y=py+ph+60;
+    x.fillStyle=ink; x.font="700 44px "+SER; x.fillText(it.name||"未命名",M,y); y+=64;
+    x.fillStyle=mut; x.font="26px "+SER;
+    x.fillText([it.cat,it.channel,it.date].filter(Boolean).join(" ｜ "),M,y); y+=64;
+    /* 价格块 */
+    x.fillStyle=acc; x.font="700 58px "+SER; x.fillText("¥ "+fmt(net),M,y);
+    var w1=x.measureText("¥ "+fmt(net)).width;
+    if(d>0){
+      x.fillStyle=mut; x.font="26px "+SER;
+      x.fillText("查看价 ¥"+fmt(p)+"　−¥"+fmt(d),M+w1+24,y);
+      x.fillStyle=acc; x.font="24px "+SER;
+      x.fillText((Math.round(net/p*100)/10).toFixed(1)+" 折",M+w1+24,y+38);
+    }
+    y+=72;
+    x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke(); y+=54;
+    /* 赠品 / 备注 */
+    var rows=[];
+    rows.push(["赠品", it.gift==="有"?(it.giftText||"有赠品"):"无"]);
+    if(it.note) rows.push(["备注", it.note]);
+    rows.push(["状态", ST[it.status]]);
+    rows.forEach(function(r){
+      x.fillStyle=mut; x.font="26px "+SER; x.fillText(r[0],M,y);
+      x.fillStyle=ink; x.font="30px "+SER;
+      wrap(x,r[1],"30px "+SER,IW-160).slice(0,2).forEach(function(l,j){
+        x.fillText(l,M+150,y+j*44);
+      });
+      y+=44*Math.min(2,wrap(x,r[1],"30px "+SER,IW-160).length)+30;
+    });
+    x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+    x.fillText("Calme · 种草记录　"+today(),W/2,H-70);
+    x.textAlign="left";
+    cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
+  }
+}
+function wrap(x,t,font,maxW){
+  x.font=font; var out=[],c="";
+  for(var i=0;i<t.length;i++){
+    if(x.measureText(c+t[i]).width>maxW){out.push(c);c=t[i];}else c+=t[i];
+  }
+  if(c)out.push(c); return out;
+}
+function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+function drawCover(x,im,dx,dy,dw,dh){
+  var r=Math.max(dw/im.width,dh/im.height), sw=dw/r, sh=dh/r;
+  var sx=(im.width-sw)/2, sy=(im.height-sh)/2;
+  x.save(); rrect(x,dx,dy,dw,dh,16); x.clip();
+  x.drawImage(im,sx,sy,sw,sh,dx,dy,dw,dh); x.restore();
+}
+var lastBlob=null;
+$("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
+$("ovShare").addEventListener("click",function(){
+  if(!lastBlob)return;
+  var f=new File([lastBlob],"种草记录.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});}
+  else{
+    var a=document.createElement("a"); a.href=URL.createObjectURL(lastBlob); a.download="种草记录.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+});
+
+document.getElementById("themes").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; applyTheme(b.dataset.t);
+});
+applyTheme(TH);
+
+render();
+</script>
+</body>
+</html>
