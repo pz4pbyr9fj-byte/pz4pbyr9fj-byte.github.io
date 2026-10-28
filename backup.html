@@ -91,7 +91,7 @@ input[type=file]{display:none;}
     <button data-t="warm" type="button">米</button><button data-t="blue" type="button">蓝</button><button data-t="green" type="button">绿</button>
   </div>
 </div>
-<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a><a href="research.html">当日科研</a></div>
 
 <div class="card">
   <h2>本机现在有什么</h2>
@@ -101,6 +101,7 @@ input[type=file]{display:none;}
   <div class="stat"><span class="k">种草记录</span><span class="v" id="sWish">0</span></div>
   <div class="stat"><span class="k">当日消费</span><span class="v" id="sSpend">0</span></div>
   <div class="stat"><span class="k">每日饮食</span><span class="v" id="sFood">0</span></div>
+  <div class="stat"><span class="k">当日科研</span><span class="v" id="sRes">0</span></div>
   <div class="stat"><span class="k">想做的事</span><span class="v" id="sTodo">0</span></div>
   <div id="sizeNote" class="note"></div>
 </div>
@@ -126,7 +127,7 @@ input[type=file]{display:none;}
 <div class="card">
   <h2>分享给朋友</h2>
   <div class="d">
-    这个网址可以直接发给朋友，她打开就是同一套卡片：心愿卡、种草记录、当日消费、每日饮食、想做的事。
+    这个网址可以直接发给朋友，她打开就是同一套卡片：心愿卡、种草记录、当日消费、每日饮食、当日科研、想做的事。
     <br><br>
     <b>两个人各记各的，互不干扰。</b>记录只存在各自手机的浏览器里，没有账号、不上传服务器——你看不到她的，她也看不到你的。她第一次打开是空白的一套，从零开始记。
     <br><br>
@@ -137,14 +138,15 @@ input[type=file]{display:none;}
 </div>
 
 <div class="quote">备份一次，换什么都不怕。</div>
-<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a><a href="research.html">当日科研</a></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 "use strict";
 var $=function(id){return document.getElementById(id);};
-var KEYS={wish:"calme_wishcard_v1", log:"calme_wishlog_v1", spend:"calme_spend_v1", food:"calme_food_v1", todo:"calme_todo_v1", theme:"calme_theme2"};
+var KEYS={wish:"calme_wishcard_v1", log:"calme_wishlog_v1", spend:"calme_spend_v1", food:"calme_food_v1",
+          res:"calme_research_v1", todo:"calme_todo_v1", theme:"calme_theme2"};
 
 var TH="blue";
 try{ if(localStorage.getItem(KEYS.theme)) TH=localStorage.getItem(KEYS.theme); }catch(e){}
@@ -162,6 +164,7 @@ function stat(){
   var l=read(KEYS.log)||{items:[]};
   var s=read(KEYS.spend)||{items:[]};
   var f=read(KEYS.food)||{items:[],water:{}};
+  var r=read(KEYS.res)||{items:[]};
   var t=read(KEYS.todo)||{items:[]};
   var curEmpty=!w.cur||!Object.keys(w.cur).some(function(k){var v=w.cur[k];return typeof v==="string"?v.trim()!=="":!!v;});
   set("sCur",curEmpty?"（空）":"1 张",curEmpty);
@@ -169,14 +172,17 @@ function stat(){
   set("sWish",(l.items||[]).length+" 条",!(l.items||[]).length);
   set("sSpend",(s.items||[]).length+" 笔",!(s.items||[]).length);
   set("sFood",((f.items||[]).length)+" 笔",!(f.items||[]).length);
+  set("sRes",(r.items||[]).length+" 项",!(r.items||[]).length);
   set("sTodo",(t.items||[]).length+" 件",!(t.items||[]).length);
 
   var full=JSON.stringify(build(true)||{});
   var sp0=read(KEYS.spend)||{items:[]};
   var f0=read(KEYS.food)||{items:[],water:{}};
+  var r0=read(KEYS.res)||{items:[]};
   var photos=(l.items||[]).filter(function(it){return it.photo;}).length
             +(sp0.items||[]).filter(function(it){return it.photo;}).length
-            +(f0.items||[]).filter(function(it){return it.photo;}).length;
+            +(f0.items||[]).filter(function(it){return it.photo;}).length
+            +(r0.items||[]).filter(function(it){return it.photo;}).length;
   $("sizeNote").textContent="完整备份约 "+Math.round(full.length/1024)+" KB"+(photos?("（含 "+photos+" 张照片）"):"（没有照片）");
 }
 function set(id,txt,zero){var el=$(id);el.textContent=txt;el.className="v"+(zero?" zero":"");}
@@ -204,6 +210,12 @@ function build(withPhoto){
   })};
   var fd=read(KEYS.food)||{items:[],water:{}};
   out.data[KEYS.food]={water:fd.water||{}, wlog:fd.wlog||{}, items:(fd.items||[]).map(function(it){
+    var o={}; for(var k in it){ if(k==="photo"&&!withPhoto)continue; o[k]=it[k]; }
+    if(!withPhoto&&it.photo) o.photoRemoved=true;
+    return o;
+  })};
+  var rs=read(KEYS.res)||{items:[]};
+  out.data[KEYS.res]={items:(rs.items||[]).map(function(it){
     var o={}; for(var k in it){ if(k==="photo"&&!withPhoto)continue; o[k]=it[k]; }
     if(!withPhoto&&it.photo) o.photoRemoved=true;
     return o;
@@ -263,7 +275,7 @@ function doImport(txt){
   var d=obj&&obj.data?obj.data:null;
   if(!d){ fail("没找到备份数据，可能复制得不完整"); return; }
 
-  var added={arch:0,log:0,spend:0,food:0,todo:0};
+  var added={arch:0,log:0,spend:0,food:0,res:0,todo:0};
   /* 心愿卡 */
   if(d[KEYS.wish]){
     var w=read(KEYS.wish)||{cur:null,arch:[]};
@@ -303,6 +315,13 @@ function doImport(txt){
     localStorage.setItem(KEYS.food,JSON.stringify(f));
     if(wtr)added.foodNote=wtr;
   }
+  /* 科研 */
+  if(d[KEYS.res]&&d[KEYS.res].items){
+    var rs=read(KEYS.res)||{items:[]};
+    if(!rs.items)rs.items=[];
+    added.res=mergeArr(rs.items,d[KEYS.res].items);
+    localStorage.setItem(KEYS.res,JSON.stringify(rs));
+  }
   /* 想做的事 */
   if(d[KEYS.todo]&&d[KEYS.todo].items){
     var t2=read(KEYS.todo)||{items:[]};
@@ -316,7 +335,7 @@ function doImport(txt){
   var el=$("res");
   el.className="res";
   el.innerHTML="导入完成：新增 归档 "+added.arch+" 张 · 种草 "+added.log+" 条 · 消费 "+added.spend+
-    " 笔 · 饮食 "+added.food+" 笔 · 想做的事 "+added.todo+" 件"+
+    " 笔 · 饮食 "+added.food+" 笔 · 科研 "+added.res+" 项 · 想做的事 "+added.todo+" 件"+
     (obj.withPhoto===false?'<br><span style="color:var(--ph)">（这份备份不含照片）</span>':"");
   stat();
   toast("已导入");
