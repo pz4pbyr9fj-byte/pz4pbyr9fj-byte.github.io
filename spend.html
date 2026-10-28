@@ -495,12 +495,11 @@ function exportMonthImg(){
   var n=daysIn(curMon);
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
   var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
-  var H=Math.max(1120, 620+bars.length*62+300);
-  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
-  var x=cv.getContext("2d");
 
+  /* 先量一遍真实高度，再正式绘制：避免内容压到页脚 */
+  function paint(x,H,withFooter){
   x.fillStyle=P.bg; x.fillRect(0,0,W,H);
   x.save(); x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
   x.fillStyle="#FFFFFF"; rrect(x,CX,CY,W-120,H-120,24); x.fill(); x.restore();
@@ -564,8 +563,18 @@ function exportMonthImg(){
       "（"+(diff>=0?"+":"-")+Math.abs(pct2)+"%）",W/2,y); x.textAlign="left";
   }
 
-  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
-  x.fillText("Calme · 月度账单　"+curMon,W/2,H-CY-40); x.textAlign="left";
+  if(withFooter){
+    x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+    x.fillText("Calme · 月度账单　"+curMon,W/2,H-CY-40); x.textAlign="left";
+  }
+  return y;
+  }
+
+  var probe=document.createElement("canvas"); probe.width=W; probe.height=4200;
+  var endY=paint(probe.getContext("2d"),4200,false);
+  var H=Math.max(1120, endY+150);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  paint(cv.getContext("2d"),H,true);
 
   lastBlob=null;
   cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
@@ -667,8 +676,8 @@ function exportImg(IMGS){
 
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
   var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
-  var cv=document.createElement("canvas"); cv.width=W; cv.height=2600;
-  var mx=cv.getContext("2d");
+  var cvm=document.createElement("canvas"); cvm.width=10; cvm.height=10;
+  var mx=cvm.getContext("2d");
 
   /* 预测量备注行数，据此定画布高度 */
   var notes=rows.map(function(it){
@@ -676,19 +685,14 @@ function exportImg(IMGS){
     var tag="["+it.cat+"] ", tw=mx.measureText(tag).width;
     return wrap(mx,it.note||"","28px "+SER,IW-96-tw-230).slice(0,2);
   });
-  var detailH=0;
-  notes.forEach(function(n){ detailH += 66 + (n.length>1?38:0); });
-
   var PER=5, PS=160, PGAP=14;
   var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
-  var phH=phRows?(46+phRows*(PS+26)+(phRows-1)*16+34):0;
-  var H=Math.max(1080, 560 + (bars.length?bars.length*62+40:60) + detailH + (extra>0?60:0) + 150 + phH);
-  cv.height=H;                       /* 重设高度会清空画布，之后才开始正式绘制 */
-  var CW=W-120, CH=H-120;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
-  var x=cv.getContext("2d");
 
+  /* 先量一遍真实高度，再正式绘制：避免内容压到页脚 */
+  function paint(x,H,withFooter){
+  var CW=W-120, CH=H-120;
   x.fillStyle=P.bg; x.fillRect(0,0,W,H);
   x.save();
   x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
@@ -771,8 +775,18 @@ function exportImg(IMGS){
     y += phRows*(PS+26+16);
   }
 
-  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
-  x.fillText("Calme · 当日消费　"+cur.date,W/2,H-CY-40); x.textAlign="left";
+  if(withFooter){
+    x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+    x.fillText("Calme · 当日消费　"+cur.date,W/2,H-CY-40); x.textAlign="left";
+  }
+  return y;
+  }
+
+  var probe=document.createElement("canvas"); probe.width=W; probe.height=4200;
+  var endY=paint(probe.getContext("2d"),4200,false);
+  var H=Math.max(1080, endY+150);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  paint(cv.getContext("2d"),H,true);
 
   lastBlob=null;
   cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
