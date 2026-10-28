@@ -93,6 +93,21 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .actions button{font-family:inherit; font-size:15px; letter-spacing:.06em; padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);}
 #btnSave{background:var(--accent); color:#fff;}
 #btnClear{background:#fff; color:var(--accent);}
+/* 月度账单 */
+.monBar{display:flex; align-items:center; gap:10px;}
+.monBar button{flex:0 0 46px; font-family:inherit; font-size:18px; padding:8px 0; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
+.monBar .mLab{flex:1; text-align:center; font-size:17px; letter-spacing:.08em; color:var(--ink);}
+.monBar .thisMon{flex:0 0 auto; font-family:inherit; font-size:12.5px; padding:9px 12px; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
+.cmp{margin-top:12px; font-size:12.5px; color:var(--muted); line-height:1.8;}
+.cmp .up{color:var(--warn); font-weight:700;} .cmp .down{color:var(--ok); font-weight:700;}
+.days{display:flex; align-items:flex-end; gap:3px; height:78px; margin-top:14px;
+  padding-top:8px; border-top:1px dashed var(--border);}
+.days .d{flex:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center;}
+.days .d i{display:block; width:100%; max-width:15px; border-radius:3px 3px 0 0; background:var(--accent); opacity:.72;}
+.days .d.no i{background:var(--line); opacity:.5;}
+.days .d b{font-weight:400; font-size:9.5px; color:var(--ph); margin-top:3px;}
 /* 列表 */
 .listTitle{display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-size:14px; color:var(--ink2); letter-spacing:.1em;}
 .listTitle .c{font-size:12.5px; color:var(--muted);}
@@ -109,7 +124,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .empty{font-size:12.5px; color:var(--ph); padding:14px 2px; text-align:center;}
 .warnline{margin-top:10px; font-size:12.5px; color:var(--warn); line-height:1.7;}
 .quote{text-align:center; font-size:12.5px; color:var(--muted); margin:16px 0 2px;}
-.nav{display:flex; justify-content:center; gap:14px; margin-top:6px; flex-wrap:wrap;}
+.nav{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:6px; flex-wrap:wrap;}
 .nav a{font-size:14px; color:var(--accent); text-decoration:none; padding:9px 14px;
   border:1px solid var(--border); border-radius:22px; background:var(--paper);
   font-family:inherit; letter-spacing:.02em; -webkit-tap-highlight-color:transparent;}
@@ -139,7 +154,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <button data-t="warm">米</button><button data-t="blue">蓝</button><button data-t="green">绿</button>
   </div>
 </div>
-<div class="nav"><a href="record.html">种草记录卡</a><a href="index.html">72h 心愿卡</a><a href="backup.html">数据备份</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a><a href="backup.html">数据备份</a></div>
 
 <div class="card">
   <div class="sec">
@@ -197,6 +212,23 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
   <div class="bars" id="bars"></div>
 </div>
 
+<div class="card">
+  <div class="monBar">
+    <button id="prevMon" type="button">‹</button>
+    <span class="mLab" id="monLabel"></span>
+    <button id="nextMon" type="button">›</button>
+    <button class="thisMon" id="btnThisMon" type="button">本月</button>
+  </div>
+  <div class="total">
+    <div class="lab2">本 月 累 计</div>
+    <div class="num" id="monSum">¥0</div>
+    <div class="cnt" id="monCnt"></div>
+  </div>
+  <div class="bars" id="monBars"></div>
+  <div class="days" id="monDays"></div>
+  <div class="cmp" id="monCmp"></div>
+</div>
+
 <div class="listTitle">
   <span>当日明细</span>
   <span class="c" id="listCount"></span>
@@ -212,14 +244,16 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
   <div class="actions" style="grid-template-columns:1fr;">
     <button id="btnText" type="button" style="background:#fff; color:var(--accent);">复制文字版</button>
   </div>
+  <div class="actions" style="grid-template-columns:1fr;">
+    <button id="btnExportMon" type="button" style="background:var(--accent); color:#fff;">生成本月账单图片</button>
+  </div>
+  <div class="actions" style="grid-template-columns:1fr;">
+    <button id="btnTextMon" type="button" style="background:#fff; color:var(--accent);">复制本月账单文字版</button>
+  </div>
 </div>
 
 <div class="quote">钱花得明白，比花得省更让人安心。</div>
-<div class="nav">
-  <a href="record.html">种草记录卡 →</a>
-  <a href="index.html">72h 心愿卡 →</a>
-  <a href="backup.html">数据备份 →</a>
-</div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a><a href="backup.html">数据备份</a></div>
 
 <div id="ov">
   <img id="ovImg" alt="当日消费卡图片">
@@ -270,10 +304,14 @@ function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");se
 /* ---------- 输入 ---------- */
 cur.date=today(); cur.time=nowHM();
 $("fDate").value=cur.date; $("fTime").value=cur.time;
-$("fDate").addEventListener("change",function(){cur.date=$("fDate").value;render();});
-$("prevDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,-1);$("fDate").value=cur.date;render();});
-$("nextDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,1);$("fDate").value=cur.date;render();});
-$("btnToday").addEventListener("click",function(){cur.date=today();$("fDate").value=cur.date;render();});
+function syncMon(){curMon=(cur.date||today()).slice(0,7);}
+$("fDate").addEventListener("change",function(){cur.date=$("fDate").value;syncMon();render();});
+$("prevDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,-1);$("fDate").value=cur.date;syncMon();render();});
+$("nextDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,1);$("fDate").value=cur.date;syncMon();render();});
+$("btnToday").addEventListener("click",function(){cur.date=today();$("fDate").value=cur.date;syncMon();render();});
+$("prevMon").addEventListener("click",function(){curMon=shiftMon(curMon,-1);renderMonth();});
+$("nextMon").addEventListener("click",function(){curMon=shiftMon(curMon,1);renderMonth();});
+$("btnThisMon").addEventListener("click",function(){curMon=today().slice(0,7);renderMonth();});
 $("fAmt").addEventListener("input",function(){cur.amt=$("fAmt").value;renderWarn();});
 $("fTime").addEventListener("input",function(){cur.time=$("fTime").value;});
 $("fNote").addEventListener("input",function(){cur.note=$("fNote").value;});
@@ -307,6 +345,163 @@ $("btnClear").addEventListener("click",function(){
 
 /* ---------- 统计 ---------- */
 function dayItems(){return D.items.filter(function(it){return it.date===cur.date;});}
+
+/* ---------- 月度账单 ---------- */
+var curMon=today().slice(0,7);
+function pad2(x){return (x<10?"0":"")+x;}
+function shiftMon(m,n){var a=m.split("-"),d=new Date(+a[0],+a[1]-1+n,1);return d.getFullYear()+"-"+pad2(d.getMonth()+1);}
+function monItems(m){return D.items.filter(function(it){return (it.date||"").slice(0,7)===m;});}
+function daysIn(m){var a=m.split("-");return new Date(+a[0],+a[1],0).getDate();}
+function monStat(m){
+  var sum=0,byCat={},byDay={},n=0;
+  monItems(m).forEach(function(it){
+    sum+=it.amt; n++;
+    byCat[it.cat]=(byCat[it.cat]||0)+it.amt;
+    byDay[it.date]=(byDay[it.date]||0)+it.amt;
+  });
+  return {sum:sum,n:n,byCat:byCat,byDay:byDay,days:Object.keys(byDay).length};
+}
+function renderMonth(){
+  var st=monStat(curMon);
+  $("monLabel").textContent=curMon.split("-")[0]+" 年 "+(+curMon.split("-")[1])+" 月";
+  $("monSum").textContent="¥"+fmt(st.sum);
+
+  var n=daysIn(curMon), isNow=(curMon===today().slice(0,7));
+  var passed=isNow?(+today().slice(8,10)):n;
+  $("monCnt").textContent=st.n
+    ? ("共 "+st.n+" 笔 · "+st.days+" 天有记录 · 日均 ¥"+fmt(st.sum/Math.max(1,passed)))
+    : (curMon+" 还没有记录");
+
+  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  $("monBars").innerHTML=bars.length?bars.map(function(c){
+    var pct=st.sum?Math.round(st.byCat[c]/st.sum*100):0;
+    return '<div class="bar"><span class="n">'+c+'</span>'+
+      '<span class="t"><i style="width:'+pct+'%"></i></span>'+
+      '<span class="v">¥'+fmt(st.byCat[c])+'　'+pct+'%</span></div>';
+  }).join(""):'<div class="empty" style="padding:4px 2px;">这个月还没有分类数据</div>';
+
+  /* 每日柱状图 */
+  var max=0; Object.keys(st.byDay).forEach(function(d){if(st.byDay[d]>max)max=st.byDay[d];});
+  var h="";
+  for(var d=1;d<=n;d++){
+    var key=curMon+"-"+pad2(d), v=st.byDay[key]||0;
+    var hh=v?Math.max(8,Math.round(v/max*52)):3;
+    var lab=(d===1||d%5===0||d===n)?String(d):"";
+    h+='<div class="d'+(v?"":" no")+'"><i style="height:'+hh+'px"></i><b>'+lab+'</b></div>';
+  }
+  $("monDays").innerHTML=h;
+
+  /* 与上月对比 */
+  var pm=shiftMon(curMon,-1), ps=monStat(pm);
+  var el=$("monCmp");
+  if(!ps.sum){
+    el.innerHTML=st.sum?"上月（"+pm+"）没有记录，没法对比。":"";
+  }else{
+    var diff=st.sum-ps.sum, pct=Math.round(diff/ps.sum*100);
+    var cls=diff>=0?"up":"down", sign=diff>=0?"↑ 多":"↓ 少";
+    el.innerHTML='上月 ¥'+fmt(ps.sum)+' ・本月 <span class="'+cls+'">'+sign+' ¥'+fmt(Math.abs(diff))+
+      '（'+(diff>=0?"+":"-")+Math.abs(pct)+'%）</span>';
+  }
+}
+function textOfMonth(){
+  var st=monStat(curMon), L=[];
+  L.push("月度账单 · "+curMon);
+  L.push("本月合计 ¥"+fmt(st.sum)+"（"+st.n+" 笔 / "+st.days+" 天）");
+  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  if(bars.length){L.push("—— 分类 ——");
+    bars.forEach(function(c){
+      L.push(c+" ¥"+fmt(st.byCat[c])+"（"+(st.sum?Math.round(st.byCat[c]/st.sum*100):0)+"%）");
+    });
+  }
+  var pm=shiftMon(curMon,-1), ps=monStat(pm);
+  if(ps.sum){
+    var diff=st.sum-ps.sum;
+    L.push("—— 对比 ——");
+    L.push("上月 ¥"+fmt(ps.sum)+"，本月"+(diff>=0?"多":"少")+" ¥"+fmt(Math.abs(diff)));
+  }
+  return L.join("\n");
+}
+function exportMonthImg(){
+  var st=monStat(curMon);
+  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  var n=daysIn(curMon);
+  var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
+  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
+  var H=Math.max(1120, 620+bars.length*62+300);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  var P=THEMES[TH]||THEMES.warm;
+  var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
+  var x=cv.getContext("2d");
+
+  x.fillStyle=P.bg; x.fillRect(0,0,W,H);
+  x.save(); x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
+  x.fillStyle="#FFFFFF"; rrect(x,CX,CY,W-120,H-120,24); x.fill(); x.restore();
+  x.strokeStyle=brd; x.lineWidth=2; rrect(x,CX,CY,W-120,H-120,24); x.stroke();
+
+  var y=CY+104;
+  x.fillStyle=ink; x.font="700 58px "+SER; x.textAlign="center"; x.fillText("月 度 账 单",W/2,y); x.textAlign="left";
+  y+=52;
+  x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
+  x.fillText(curMon.split("-")[0]+" 年 "+(+curMon.split("-")[1])+" 月",W/2,y); x.textAlign="left";
+  y+=64;
+  x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center"; x.fillText("本 月 合 计",W/2,y); x.textAlign="left";
+  y+=62;
+  x.fillStyle=acc; x.font="700 84px "+SER; x.textAlign="center"; x.fillText("¥ "+fmt(st.sum),W/2,y); x.textAlign="left";
+  y+=42;
+  x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center";
+  x.fillText(st.n?(st.n+" 笔 · "+st.days+" 天有记录"):"这个月还没有记录",W/2,y); x.textAlign="left";
+  y+=52;
+  x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke();
+  y+=52;
+
+  bars.forEach(function(c){
+    var pct=st.sum?st.byCat[c]/st.sum:0;
+    x.fillStyle=ink; x.font="28px "+SER; x.fillText(c,M,y);
+    x.fillStyle=mut; x.font="26px "+SER;
+    var vs="¥"+fmt(st.byCat[c])+"　"+Math.round(pct*100)+"%";
+    x.textAlign="right"; x.fillText(vs,M+IW,y); x.textAlign="left";
+    var bw=x.measureText(c).width, vw=x.measureText(vs).width;
+    var bx=M+bw+24, bwid=IW-bw-vw-48, by=y-16;
+    x.fillStyle="#FFFFFF"; rrect(x,bx,by,bwid,14,7); x.fill();
+    x.strokeStyle=brd; x.lineWidth=1.5; rrect(x,bx,by,bwid,14,7); x.stroke();
+    if(pct>0){x.fillStyle=acc;x.globalAlpha=.72;rrect(x,bx,by,Math.max(14,bwid*pct),14,7);x.fill();x.globalAlpha=1;}
+    y+=62;
+  });
+  y+=10;
+  x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke();
+  y+=40;
+
+  /* 每日柱状图 */
+  var max=0; Object.keys(st.byDay).forEach(function(d){if(st.byDay[d]>max)max=st.byDay[d];});
+  var chartH=150, baseY=y+chartH, bw=IW/n, gap=Math.min(6,bw*0.18);
+  x.fillStyle=mut; x.font="22px "+SER; x.fillText("每日花费",M,y+22);
+  for(var d=1;d<=n;d++){
+    var key=curMon+"-"+pad2(d), v=st.byDay[key]||0;
+    var bh=v?Math.max(6,Math.round(v/max*chartH)):3;
+    var bx2=M+(d-1)*bw+gap/2, wid=bw-gap;
+    x.fillStyle=v?acc:line; x.globalAlpha=v?.72:.5;
+    rrect(x,bx2,baseY-bh,wid,bh,Math.min(4,wid/2)); x.fill(); x.globalAlpha=1;
+    if(d===1||d%5===0||d===n){
+      x.fillStyle=P.ph; x.font="18px "+SER; x.textAlign="center";
+      x.fillText(String(d),bx2+wid/2,baseY+28); x.textAlign="left";
+    }
+  }
+  y=baseY+58;
+
+  var pm=shiftMon(curMon,-1), ps=monStat(pm);
+  if(ps.sum){
+    var diff=st.sum-ps.sum, pct2=Math.round(diff/ps.sum*100);
+    x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center";
+    x.fillText("上月 ¥"+fmt(ps.sum)+" ・ 本月"+(diff>=0?"多":"少")+" ¥"+fmt(Math.abs(diff))+
+      "（"+(diff>=0?"+":"-")+Math.abs(pct2)+"%）",W/2,y); x.textAlign="left";
+  }
+
+  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+  x.fillText("Calme · 月度账单　"+curMon,W/2,H-CY-40); x.textAlign="left";
+
+  lastBlob=null;
+  cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
+}
 function render(){
   renderCats();
   var items=dayItems().slice().sort(function(a,b){return (b.time||"").localeCompare(a.time||"");});
@@ -325,7 +520,7 @@ function render(){
   }).join(""):'<div class="empty" style="padding:4px 2px;">当天还没有分类数据</div>';
 
   var L=$("list");
-  if(!items.length){L.innerHTML='<div class="empty">这一天还没有记录。随手记一笔吧。</div>';return;}
+  if(!items.length){L.innerHTML='<div class="empty">这一天还没有记录。随手记一笔吧。</div>';renderMonth();return;}
   L.innerHTML=items.map(function(it){
     var idx=D.items.indexOf(it);
     return '<div class="item">'+
@@ -337,6 +532,8 @@ function render(){
       '<button class="del" data-i="'+idx+'">删</button>'+
     '</div>';
   }).join("");
+
+  renderMonth();
 }
 $("list").addEventListener("click",function(e){
   var b=e.target.closest("button.del"); if(!b)return;
@@ -484,10 +681,26 @@ function wrap(x,t,font,maxW){
 function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 var lastBlob=null;
 
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){toast("已复制，去微信粘贴");},function(){fallbackCopy(t);});
+  }else fallbackCopy(t);
+  function fallbackCopy(t){
+    var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy"); toast("已复制，去微信粘贴");}catch(e){toast("复制失败，请手动选择");}
+    document.body.removeChild(ta);
+  }
+}
 $("btnExport").addEventListener("click",function(){
   if(!dayItems().length){toast("这一天还没有记录");return;}
   exportImg();
 });
+$("btnExportMon").addEventListener("click",function(){
+  if(!monItems(curMon).length){toast("这个月还没有记录");return;}
+  exportMonthImg();
+});
+$("btnTextMon").addEventListener("click",function(){ copyText(textOfMonth()); });
 $("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
 $("ovShare").addEventListener("click",function(){
   if(!lastBlob)return;
