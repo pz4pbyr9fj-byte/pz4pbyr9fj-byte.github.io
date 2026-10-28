@@ -180,7 +180,8 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
       <button data-v="探店" type="button">探店</button>
       <button data-v="交通" type="button">交通</button>
       <button data-v="购物" type="button">购物</button>
-      <button data-v="其他" type="button">其他</button>
+      <button data-v="美妆护肤" type="button">美妆护肤</button>
+      <button data-v="其他" type="button" style="grid-column:span 3;">其他</button>
     </div>
   </div>
 
@@ -290,7 +291,7 @@ function applyTheme(t){
   document.querySelectorAll("#themes button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
 }
 
-var CATS=["吃饭","咖啡","探店","交通","购物","其他"];
+var CATS=["吃饭","咖啡","探店","交通","购物","美妆护肤","其他"];
 var cur={date:"",amt:"",cat:"吃饭",time:"",note:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function nowHM(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return p(d.getHours())+":"+p(d.getMinutes());}
@@ -323,9 +324,10 @@ function renderCats(){
 }
 function renderWarn(){
   var el=$("shopWarn");
-  if(cur.cat==="购物"&&num(cur.amt)>=1000){
+  var BIG=["购物","美妆护肤"];
+  if(BIG.indexOf(cur.cat)>=0&&num(cur.amt)>=1000){
     el.style.display="";
-    el.innerHTML='⚠️ 这笔购物 ≥¥1,000，建议先去 <a href="index.html" style="color:var(--warn)">填 72h 心愿卡</a> 冷静一下。';
+    el.innerHTML='⚠️ 这笔'+cur.cat+' ≥¥1,000，建议先去 <a href="index.html" style="color:var(--warn)">填 72h 心愿卡</a> 冷静一下。';
   }else{el.style.display="none";}
 }
 
