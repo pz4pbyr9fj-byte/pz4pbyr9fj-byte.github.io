@@ -443,14 +443,16 @@ function exportImg(it){
     var rows=[];
     rows.push(["赠品", it.gift==="有"?(it.giftText||"有赠品"):"无"]);
     if(it.note) rows.push(["备注", it.note]);
-    rows.push(["状态", ST[it.status]]);
+    rows.push(["状态", ST[it.status]||""]);
     rows.forEach(function(r){
+      var rv=r[1]==null?"":String(r[1]);
       x.fillStyle=mut; x.font="26px "+SER; x.fillText(r[0],M,y);
       x.fillStyle=ink; x.font="30px "+SER;
-      wrap(x,r[1],"30px "+SER,IW-160).slice(0,2).forEach(function(l,j){
+      var rw=wrap(x,rv,"30px "+SER,IW-160);
+      rw.slice(0,2).forEach(function(l,j){
         x.fillText(l,M+150,y+j*44);
       });
-      y+=44*Math.min(2,wrap(x,r[1],"30px "+SER,IW-160).length)+30;
+      y+=44*Math.min(2,rw.length)+30;
     });
     x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
     x.fillText("Calme · 种草记录　"+today(),W/2,H-70);
