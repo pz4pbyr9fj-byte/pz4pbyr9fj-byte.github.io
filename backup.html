@@ -173,8 +173,10 @@ function stat(){
 
   var full=JSON.stringify(build(true)||{});
   var sp0=read(KEYS.spend)||{items:[]};
+  var f0=read(KEYS.food)||{items:[],water:{}};
   var photos=(l.items||[]).filter(function(it){return it.photo;}).length
-            +(sp0.items||[]).filter(function(it){return it.photo;}).length;
+            +(sp0.items||[]).filter(function(it){return it.photo;}).length
+            +(f0.items||[]).filter(function(it){return it.photo;}).length;
   $("sizeNote").textContent="完整备份约 "+Math.round(full.length/1024)+" KB"+(photos?("（含 "+photos+" 张照片）"):"（没有照片）");
 }
 function set(id,txt,zero){var el=$(id);el.textContent=txt;el.className="v"+(zero?" zero":"");}
@@ -200,7 +202,12 @@ function build(withPhoto){
     if(!withPhoto&&it.photo) o.photoRemoved=true;
     return o;
   })};
-  out.data[KEYS.food]=read(KEYS.food)||{items:[],water:{}};
+  var fd=read(KEYS.food)||{items:[],water:{}};
+  out.data[KEYS.food]={water:fd.water||{}, items:(fd.items||[]).map(function(it){
+    var o={}; for(var k in it){ if(k==="photo"&&!withPhoto)continue; o[k]=it[k]; }
+    if(!withPhoto&&it.photo) o.photoRemoved=true;
+    return o;
+  })};
   out.data[KEYS.todo]=read(KEYS.todo)||{items:[]};
   var th=null; try{th=localStorage.getItem(KEYS.theme);}catch(e){}
   out.data[KEYS.theme]=th||"blue";
