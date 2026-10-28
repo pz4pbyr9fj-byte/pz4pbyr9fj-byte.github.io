@@ -508,21 +508,23 @@ $("btnCopy").addEventListener("click",function(){
 
 /* ---------- 卡片图片（还原 PDF 版式） ---------- */
 function drawCard(){
-  var c=S.cur, W=1080, H=1840, cv=document.createElement("canvas");
+  var c=S.cur, W=1080;
   var dpr=Math.min(3,window.devicePixelRatio||1)*1.5|0||2;
-  cv.width=W; cv.height=H;
-  var x=cv.getContext("2d");
   var P=THEMES[TH]||THEMES.warm;
+  /* 白色卡片 */
+  var CX=60, CY=60, CW=W-120, CR=24;
+  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
+  /* 字体度量在真机上和本地不同，行数会变 → 先量一遍真实高度再出图，避免内容压到页脚 */
+  function paint(x,H,withFooter){
+  var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
+  var M=CX+44, IW=W-M*2;
+  var CH=H-120;
   x.fillStyle=P.bg; x.fillRect(0,0,W,H);
-  /* 中间白色卡片 */
-  var CX=60, CY=60, CW=W-120, CH=H-120, CR=24;
   x.save();
   x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
   x.fillStyle="#FFFFFF"; roundRectF(x,CX,CY,CW,CH,CR); x.fill();
   x.restore();
   x.strokeStyle=P.border; x.lineWidth=2; roundRectF(x,CX,CY,CW,CH,CR); x.stroke();
-  var M=CX+44, IW=W-M*2, ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
-  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
   function wrap(t,font,maxW){
     x.font=font; var out=[],cur="";
     for(var i=0;i<t.length;i++){
@@ -626,13 +628,23 @@ function drawCard(){
   chk(cx0+150,"放弃（省下 ¥"+(c.saved||c.price?fmt(c.saved||c.price):"＿＿")+"）",c.decision==="drop");
   y+=70;
   /* 底部 */
-  x.fillStyle=mut;x.font="24px "+SER;
-  x.textAlign="center";
-  x.fillText("72 小时后还想不起来这张卡，说明本来就不该买。",W/2,H-140);
-  x.fillStyle=P.ph;x.font="22px "+SER;
-  x.fillText("Calme · 大额冷静期　"+now(),W/2,H-100);
-  x.textAlign="left";
+  if(withFooter){
+    x.fillStyle=mut;x.font="24px "+SER;
+    x.textAlign="center";
+    x.fillText("72 小时后还想不起来这张卡，说明本来就不该买。",W/2,H-140);
+    x.fillStyle=P.ph;x.font="22px "+SER;
+    x.fillText("Calme · 大额冷静期　"+now(),W/2,H-100);
+    x.textAlign="left";
+  }
   function now(){var d=new Date();return d.getFullYear()+"/"+pad(d.getMonth()+1)+"/"+pad(d.getDate());}
+  return y;
+  }
+
+  var probe=document.createElement("canvas"); probe.width=W; probe.height=4200;
+  var endY=paint(probe.getContext("2d"),4200,false);
+  var H=Math.max(1840, endY+150);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  paint(cv.getContext("2d"),H,true);
   return cv;
 }
 function roundRectF(x,a,b,w,h,r){
