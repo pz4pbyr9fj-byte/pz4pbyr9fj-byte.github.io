@@ -71,7 +71,7 @@ input[type=file]{display:none;}
 .res{font-size:13px; color:var(--ok); line-height:1.8; margin-top:10px;}
 .res.bad{color:var(--warn);}
 .quote{text-align:center; font-size:12.5px; color:var(--muted); margin:16px 0 2px;}
-.nav{display:flex; justify-content:center; gap:14px; margin-top:6px; flex-wrap:wrap;}
+.nav{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:6px; flex-wrap:wrap;}
 .nav a{font-size:14px; color:var(--accent); text-decoration:none; padding:9px 14px;
   border:1px solid var(--border); border-radius:22px; background:var(--paper);
   font-family:inherit; letter-spacing:.02em; -webkit-tap-highlight-color:transparent;}
@@ -91,7 +91,7 @@ input[type=file]{display:none;}
     <button data-t="warm" type="button">米</button><button data-t="blue" type="button">蓝</button><button data-t="green" type="button">绿</button>
   </div>
 </div>
-<div class="nav"><a href="index.html">72h 心愿卡</a><a href="record.html">种草记录卡</a><a href="spend.html">当日消费卡</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a></div>
 
 <div class="card">
   <h2>本机现在有什么</h2>
@@ -100,6 +100,8 @@ input[type=file]{display:none;}
   <div class="stat"><span class="k">72h 心愿卡 · 已归档</span><span class="v" id="sArch">0</span></div>
   <div class="stat"><span class="k">种草记录</span><span class="v" id="sWish">0</span></div>
   <div class="stat"><span class="k">当日消费</span><span class="v" id="sSpend">0</span></div>
+  <div class="stat"><span class="k">每日饮食</span><span class="v" id="sFood">0</span></div>
+  <div class="stat"><span class="k">想做的事</span><span class="v" id="sTodo">0</span></div>
   <div id="sizeNote" class="note"></div>
 </div>
 
@@ -122,18 +124,14 @@ input[type=file]{display:none;}
 </div>
 
 <div class="quote">备份一次，换什么都不怕。</div>
-<div class="nav">
-  <a href="index.html">心愿卡 →</a>
-  <a href="record.html">种草记录 →</a>
-  <a href="spend.html">当日消费 →</a>
-</div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 "use strict";
 var $=function(id){return document.getElementById(id);};
-var KEYS={wish:"calme_wishcard_v1", log:"calme_wishlog_v1", spend:"calme_spend_v1", theme:"calme_theme2"};
+var KEYS={wish:"calme_wishcard_v1", log:"calme_wishlog_v1", spend:"calme_spend_v1", food:"calme_food_v1", todo:"calme_todo_v1", theme:"calme_theme2"};
 
 var TH="blue";
 try{ if(localStorage.getItem(KEYS.theme)) TH=localStorage.getItem(KEYS.theme); }catch(e){}
@@ -150,11 +148,15 @@ function stat(){
   var w=read(KEYS.wish)||{cur:null,arch:[]};
   var l=read(KEYS.log)||{items:[]};
   var s=read(KEYS.spend)||{items:[]};
+  var f=read(KEYS.food)||{items:[],water:{}};
+  var t=read(KEYS.todo)||{items:[]};
   var curEmpty=!w.cur||!Object.keys(w.cur).some(function(k){var v=w.cur[k];return typeof v==="string"?v.trim()!=="":!!v;});
   set("sCur",curEmpty?"（空）":"1 张",curEmpty);
   set("sArch",(w.arch||[]).length+" 张",!(w.arch||[]).length);
   set("sWish",(l.items||[]).length+" 条",!(l.items||[]).length);
   set("sSpend",(s.items||[]).length+" 笔",!(s.items||[]).length);
+  set("sFood",((f.items||[]).length)+" 笔",!(f.items||[]).length);
+  set("sTodo",(t.items||[]).length+" 件",!(t.items||[]).length);
 
   var full=JSON.stringify(build(true)||{});
   var photos=(l.items||[]).filter(function(it){return it.photo;}).length;
@@ -178,6 +180,8 @@ function build(withPhoto){
   out.data[KEYS.wish]=read(KEYS.wish)||{cur:null,arch:[]};
   out.data[KEYS.log]={items:items};
   out.data[KEYS.spend]=read(KEYS.spend)||{items:[]};
+  out.data[KEYS.food]=read(KEYS.food)||{items:[],water:{}};
+  out.data[KEYS.todo]=read(KEYS.todo)||{items:[]};
   var th=null; try{th=localStorage.getItem(KEYS.theme);}catch(e){}
   out.data[KEYS.theme]=th||"blue";
   return out;
@@ -232,7 +236,7 @@ function doImport(txt){
   var d=obj&&obj.data?obj.data:null;
   if(!d){ fail("没找到备份数据，可能复制得不完整"); return; }
 
-  var added={arch:0,log:0,spend:0};
+  var added={arch:0,log:0,spend:0,food:0,todo:0};
   /* 心愿卡 */
   if(d[KEYS.wish]){
     var w=read(KEYS.wish)||{cur:null,arch:[]};
@@ -256,12 +260,32 @@ function doImport(txt){
     added.spend=mergeArr(s.items,d[KEYS.spend].items);
     localStorage.setItem(KEYS.spend,JSON.stringify(s));
   }
+  /* 饮食 */
+  if(d[KEYS.food]&&(d[KEYS.food].items||d[KEYS.food].water)){
+    var f=read(KEYS.food)||{items:[],water:{}};
+    if(!f.items)f.items=[]; if(!f.water)f.water={};
+    added.food=mergeArr(f.items,d[KEYS.food].items||[]);
+    var wtr=0;
+    Object.keys(d[KEYS.food].water||{}).forEach(function(k){
+      if(!f.water[k]||d[KEYS.food].water[k]>f.water[k]){f.water[k]=d[KEYS.food].water[k];wtr++;}
+    });
+    localStorage.setItem(KEYS.food,JSON.stringify(f));
+    if(wtr)added.foodNote=wtr;
+  }
+  /* 想做的事 */
+  if(d[KEYS.todo]&&d[KEYS.todo].items){
+    var t2=read(KEYS.todo)||{items:[]};
+    if(!t2.items)t2.items=[];
+    added.todo=mergeArr(t2.items,d[KEYS.todo].items);
+    localStorage.setItem(KEYS.todo,JSON.stringify(t2));
+  }
   /* 配色 */
   if(d[KEYS.theme]){ try{localStorage.setItem(KEYS.theme,d[KEYS.theme]);}catch(e){} applyTheme(d[KEYS.theme]); }
 
   var el=$("res");
   el.className="res";
-  el.innerHTML="导入完成：新增 归档 "+added.arch+" 张 · 种草 "+added.log+" 条 · 消费 "+added.spend+" 笔"+
+  el.innerHTML="导入完成：新增 归档 "+added.arch+" 张 · 种草 "+added.log+" 条 · 消费 "+added.spend+
+    " 笔 · 饮食 "+added.food+" 笔 · 想做的事 "+added.todo+" 件"+
     (obj.withPhoto===false?'<br><span style="color:var(--ph)">（这份备份不含照片）</span>':"");
   stat();
   toast("已导入");
