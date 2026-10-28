@@ -380,8 +380,8 @@ function exportImg(){
   var done=D.items.filter(function(it){return it.status==="done";}).length;
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
   var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
-  var cv=document.createElement("canvas"); cv.width=W; cv.height=2600;
-  var mx=cv.getContext("2d");
+  var cvm=document.createElement("canvas"); cvm.width=10; cvm.height=10;
+  var mx=cvm.getContext("2d");
 
   var rows=[];
   ["doing","want","done","drop"].forEach(function(st){
@@ -395,14 +395,11 @@ function exportImg(){
     });
     rows.push({st:st,lines:lines});
   });
-  var bodyH=0;
-  rows.forEach(function(r){ bodyH+=56+r.lines.reduce(function(a,l){return a+Math.max(1,l.tl.length)*44+34;},0); });
-  var H=Math.max(1080, 440+bodyH+120);
-  cv.height=H;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
-  var x=cv.getContext("2d");
 
+  /* 先量一遍真实高度，再正式绘制：避免内容压到页脚 */
+  function paint(x,H,withFooter){
   x.fillStyle=P.bg; x.fillRect(0,0,W,H);
   x.save(); x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
   x.fillStyle="#FFFFFF"; rrect(x,CX,CY,W-120,H-120,24); x.fill(); x.restore();
@@ -447,8 +444,18 @@ function exportImg(){
     y+=8;
   });
 
-  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
-  x.fillText("Calme · 想做的事　"+today(),W/2,H-CY-40); x.textAlign="left";
+  if(withFooter){
+    x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+    x.fillText("Calme · 想做的事　"+today(),W/2,H-CY-40); x.textAlign="left";
+  }
+  return y;
+  }
+
+  var probe=document.createElement("canvas"); probe.width=W; probe.height=4200;
+  var endY=paint(probe.getContext("2d"),4200,false);
+  var H=Math.max(1080, endY+150);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  paint(cv.getContext("2d"),H,true);
 
   lastBlob=null;
   cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
