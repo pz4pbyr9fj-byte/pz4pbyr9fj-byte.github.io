@@ -94,10 +94,21 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
   border:1px solid var(--border); border-radius:12px; padding:12px 14px;}
 .water .wl{flex:1;}
 .water .wl .t{font-size:13px; color:var(--ink2);}
-.water .wl .v{font-size:22px; font-weight:700; color:var(--accent); margin-top:2px;}
+.water .wl .v{font-size:30px; font-weight:700; color:var(--accent); margin-top:2px;}
 .water .wl .m{font-size:11.5px; color:var(--muted); margin-top:2px;}
-.water button{flex:0 0 44px; font-family:inherit; font-size:20px; padding:9px 0; border-radius:50%;
-  border:1.5px solid var(--line); background:#fff; color:var(--ink2);}
+.wbar{margin-top:8px; height:8px; background:#fff; border:1px solid var(--border); border-radius:6px; overflow:hidden;}
+.wbar i{display:block; height:100%; width:0; background:var(--accent); opacity:.75;}
+.wadd{display:flex; align-items:center; gap:8px; margin-top:10px;}
+.wadd input{flex:1; text-align:center; font-size:16px;}
+.wadd .u{flex:0 0 auto; font-size:14px; color:var(--muted);}
+.wadd button{flex:0 0 78px; font-family:inherit; font-size:14px; padding:10px 0; border-radius:9px;
+  border:1.5px solid var(--accent); background:var(--accent); color:#fff;}
+.wquick{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+.wquick button{font-family:inherit; font-size:14px; padding:9px 0; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
+.wacts{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+.wacts button{font-family:inherit; font-size:13px; padding:9px 0; border-radius:9px;
+  border:1px solid var(--border); background:#fff; color:var(--muted);}
 .actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
 .actions button{font-family:inherit; font-size:15px; letter-spacing:.06em; padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);}
 #btnSave{background:var(--accent); color:#fff;}
@@ -212,12 +223,27 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <div class="water">
       <div class="wl">
         <div class="t">今日饮水</div>
-        <div class="v" id="wVal">0 杯</div>
-        <div class="m" id="wMl">约 0 ml · 建议 8 杯</div>
+        <div class="v" id="wVal">0 ml</div>
+        <div class="m" id="wMl">建议 2000 ml · 还差 2000 ml</div>
+        <div class="wbar"><i id="wBar"></i></div>
       </div>
-      <button id="wMinus" type="button">−</button>
-      <button id="wPlus" type="button">＋</button>
     </div>
+    <div class="wadd">
+      <input type="number" id="wInput" inputmode="numeric" placeholder="250">
+      <span class="u">ml</span>
+      <button id="wAdd" type="button">记上</button>
+    </div>
+    <div class="wquick" id="wQuick">
+      <button data-v="100" type="button">+100</button>
+      <button data-v="200" type="button">+200</button>
+      <button data-v="250" type="button">+250</button>
+      <button data-v="500" type="button">+500</button>
+    </div>
+    <div class="wacts">
+      <button id="wUndo" type="button">撤销上一次</button>
+      <button id="wClear" type="button">今日清零</button>
+    </div>
+    <div class="hintline">想记多少就填多少，比如一杯水 250、一碗汤 300。照片和饮水都存在手机本地。</div>
   </div>
 
   <div class="actions">
@@ -269,7 +295,21 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 "use strict";
 var LS="calme_food_v1";
 var $=function(id){return document.getElementById(id);};
-function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&s.items)return s;}catch(e){}return {items:[],water:{}};}
+function load(){
+  try{
+    var s=JSON.parse(localStorage.getItem(LS));
+    if(s&&s.items){
+      if(!s.water)s.water={};          /* 早期版本没有 water 字段，补上否则记饮水会报错 */
+      if(!s.wlog)s.wlog={};
+      Object.keys(s.water).forEach(function(k){   /* 旧数据单位是「杯」，换算成 ml */
+        var v=+s.water[k]||0;
+        if(v>0&&v<=30){ s.water[k]=v*250; s.wlog[k]=[v*250]; }
+      });
+      return s;
+    }
+  }catch(e){}
+  return {items:[],water:{},wlog:{}};
+}
 function save(){
   try{ localStorage.setItem(LS,JSON.stringify(D)); return true; }
   catch(e){ toast("手机存储空间满了 · 去「数据备份」导出后删掉一些旧照片再试"); return false; }
@@ -351,17 +391,47 @@ function renderPhoto(){
   p.innerHTML=cur.photo?'<img src="'+cur.photo+'" alt="照片">':"<span>无照片</span>";
 }
 
-/* ---------- 饮水 ---------- */
-function cups(){return D.water[cur.date]||0;}
+/* ---------- 饮水（直接记 ml） ---------- */
+var WGOAL=2000;
+function ml(){return D.water[cur.date]||0;}
 function renderWater(){
-  $("wVal").textContent=cups()+" 杯";
-  $("wMl").textContent="约 "+cups()*250+" ml · 建议 8 杯"+(cups()>=8?" · 达标 ✓":"");
+  var v=ml(), pct=Math.min(100,Math.round(v/WGOAL*100));
+  $("wVal").textContent=v+" ml";
+  $("wMl").textContent="建议 "+WGOAL+" ml · "+(v>=WGOAL?("已达标 ✓ "+pct+"%"):("还差 "+(WGOAL-v)+" ml · "+pct+"%"));
+  $("wBar").style.width=pct+"%";
 }
-$("wPlus").addEventListener("click",function(){D.water[cur.date]=cups()+1;save();renderWater();});
-$("wMinus").addEventListener("click",function(){
-  if(cups()<=0)return;
-  D.water[cur.date]=cups()-1; if(!D.water[cur.date])delete D.water[cur.date];
-  save(); renderWater();
+function addWater(v){
+  v=Math.round(num(v));
+  if(!(v>0)){toast("先填个大于 0 的 ml 数");$("wInput").focus();return;}
+  D.water[cur.date]=ml()+v;
+  (D.wlog[cur.date]=D.wlog[cur.date]||[]).push(v);
+  if(!save()){                                  /* 存储满了就回滚这一次 */
+    D.wlog[cur.date].pop(); if(!D.wlog[cur.date].length)delete D.wlog[cur.date];
+    D.water[cur.date]=ml()-v; if(!D.water[cur.date])delete D.water[cur.date];
+    return;
+  }
+  $("wInput").value="";
+  renderWater(); render(); toast("+"+v+" ml（今日 "+ml()+" ml）");
+}
+$("wAdd").addEventListener("click",function(){addWater($("wInput").value);});
+$("wInput").addEventListener("keydown",function(e){if(e.key==="Enter"){addWater($("wInput").value);}});
+$("wQuick").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; addWater(b.dataset.v);
+});
+$("wUndo").addEventListener("click",function(){
+  var log=D.wlog[cur.date]||[];
+  if(!log.length){toast("今天还没有饮水记录");return;}
+  var v=log.pop();
+  D.water[cur.date]=Math.max(0,ml()-v);
+  if(!D.water[cur.date])delete D.water[cur.date];
+  if(!log.length)delete D.wlog[cur.date];
+  save(); renderWater(); render(); toast("撤销 "+v+" ml");
+});
+$("wClear").addEventListener("click",function(){
+  if(!ml()){toast("今天还没有饮水记录");return;}
+  if(!confirm("把 "+cur.date+" 的饮水记录清零？"))return;
+  delete D.water[cur.date]; delete D.wlog[cur.date];
+  save(); renderWater(); render(); toast("今日饮水已清零");
 });
 
 /* ---------- 保存 ---------- */
@@ -387,7 +457,7 @@ function render(){
   var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
   $("sum").textContent=items.length?(items.length+" 笔"):"0 笔";
   $("cnt").textContent=items.length
-    ? ("热量 "+(kc?kc+" kcal":"未记")+" · 饮水 "+cups()+" 杯（"+cups()*250+" ml）"+(cups()>=8?" · 达标 ✓":""))
+    ? ("热量 "+(kc?kc+" kcal":"未记")+" · 饮水 "+ml()+" ml"+(ml()>=WGOAL?" · 达标 ✓":""))
     : (cur.date+" 还没有记录");
 
   var cov=MEALS.slice(0,3).map(function(m){
@@ -432,7 +502,7 @@ function textOf(){
   var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
   var L=[];
   L.push("每日饮食 · "+cur.date);
-  L.push("共 "+items.length+" 笔"+(kc?" · 热量 "+kc+" kcal":"")+" · 饮水 "+cups()+" 杯");
+  L.push("共 "+items.length+" 笔"+(kc?" · 热量 "+kc+" kcal":"")+" · 饮水 "+ml()+" ml / "+WGOAL+" ml");
   MEALS.forEach(function(m){
     var g=items.filter(function(it){return it.meal===m;});
     if(!g.length)return;
@@ -509,7 +579,7 @@ function exportImg(IMGS){
   var PER=5, PS=160, PGAP=14;
   var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
   var phH=phRows?(46+phRows*(PS+26)+(phRows-1)*16+34):0;
-  var H=Math.max(1080, 430+bodyH+180+phH);
+  var H=Math.max(1080, 430+bodyH+210+phH);
   cv.height=H;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
@@ -547,7 +617,13 @@ function exportImg(IMGS){
 
   y+=6;
   x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
-  x.fillText((kc?("热量 "+kc+" kcal · "):"")+"饮水 "+cups()+" 杯（"+cups()*250+" ml）"+(cups()>=8?" · 达标 ✓":""),W/2,y); x.textAlign="left";
+  x.fillText((kc?("热量 "+kc+" kcal · "):"")+"饮水 "+ml()+" ml / "+WGOAL+" ml"+(ml()>=WGOAL?" · 达标 ✓":""),W/2,y); x.textAlign="left";
+  y+=26;
+  /* 饮水进度条 */
+  var wpc=Math.min(1,ml()/WGOAL), bw=520, bx=(W-bw)/2, bh=14;
+  x.fillStyle="#FFFFFF"; rrect(x,bx,y,bw,bh,7); x.fill();
+  x.strokeStyle=brd; x.lineWidth=1.5; rrect(x,bx,y,bw,bh,7); x.stroke();
+  if(wpc>0){ x.fillStyle=acc; x.globalAlpha=.72; rrect(x,bx,y,Math.max(14,bw*wpc),bh,7); x.fill(); x.globalAlpha=1; }
 
   /* 当日照片 */
   if(phRows){
@@ -575,7 +651,7 @@ function exportImg(IMGS){
 }
 
 $("btnExport").addEventListener("click",function(){
-  if(!dayItems().length&&!cups()){toast("这一天还没有记录");return;}
+  if(!dayItems().length&&!ml()){toast("这一天还没有记录");return;}
   exportDay();
 });
 $("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
