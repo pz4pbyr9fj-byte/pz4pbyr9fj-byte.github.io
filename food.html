@@ -72,6 +72,23 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .meals button{font-family:inherit; font-size:15px; padding:11px 4px; border-radius:9px;
   border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
 .meals button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+/* 照片 */
+.phBox{display:flex; gap:12px; align-items:flex-start;}
+.phPrev{
+  flex:0 0 96px; width:96px; height:96px; border-radius:10px; border:1.5px dashed var(--line);
+  background:var(--soft); display:flex; align-items:center; justify-content:center; overflow:hidden;
+  color:var(--ph); font-size:11.5px; text-align:center; line-height:1.5;
+}
+.phPrev img{width:100%; height:100%; object-fit:cover; display:block;}
+.phBtns{flex:1; display:flex; flex-direction:column; gap:8px;}
+.phBtns button{
+  font-family:inherit; font-size:14px; padding:9px 12px; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2); width:100%;
+}
+.hintline{font-size:11.5px; color:var(--ph); line-height:1.6; margin-top:6px;}
+.item .ph{flex:0 0 44px; width:44px; height:44px; border-radius:8px; overflow:hidden;
+  border:1px solid var(--border); background:var(--soft); flex-shrink:0; align-self:center;}
+.item .ph img{width:100%; height:100%; object-fit:cover; display:block;}
 /* 饮水 */
 .water{display:flex; align-items:center; gap:14px; background:var(--soft);
   border:1px solid var(--border); border-radius:12px; padding:12px 14px;}
@@ -166,6 +183,20 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <input type="text" id="fFood" placeholder="燕麦牛奶 + 一个鸡蛋">
   </div>
 
+  <div class="sec">
+    <label class="lab">照片（可不填）</label>
+    <div class="phBox">
+      <div class="phPrev" id="phPrev"><span>无照片</span></div>
+      <div class="phBtns">
+        <button id="btnPhCam" type="button">拍照</button>
+        <button id="btnPhPick" type="button">从相册选</button>
+        <button id="btnPhDel" type="button">清除照片</button>
+      </div>
+    </div>
+    <input type="file" id="phFile" accept="image/*" hidden>
+    <div class="hintline">吃饭前顺手拍一张，之后翻记录更有画面。照片存在手机本地，不会上传。</div>
+  </div>
+
   <div class="sec grid2">
     <div>
       <label class="lab" for="fKcal">热量 kcal（可不填）</label>
@@ -239,7 +270,10 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 var LS="calme_food_v1";
 var $=function(id){return document.getElementById(id);};
 function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&s.items)return s;}catch(e){}return {items:[],water:{}};}
-function save(){localStorage.setItem(LS,JSON.stringify(D));}
+function save(){
+  try{ localStorage.setItem(LS,JSON.stringify(D)); return true; }
+  catch(e){ toast("手机存储空间满了 · 去「数据备份」导出后删掉一些旧照片再试"); return false; }
+}
 var D=load();
 
 /* ---------- 配色（米 / 蓝 / 绿） ---------- */
@@ -261,7 +295,7 @@ function applyTheme(t){
 
 var MEALS=["早餐","午餐","晚餐","加餐"];
 var MEAL_ICON={"早餐":"☀","午餐":"◐","晚餐":"☾","加餐":"✿"};
-var cur={date:"",meal:"早餐",food:"",kcal:"",note:""};
+var cur={date:"",meal:"早餐",food:"",kcal:"",note:"",photo:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function shiftDate(s,n){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);d.setDate(d.getDate()+n);
   var p=function(x){return (x<10?"0":"")+x;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
@@ -286,6 +320,37 @@ function renderMeals(){
   document.querySelectorAll("#meals button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.meal);});
 }
 
+/* ---------- 照片 ---------- */
+var phInput=$("phFile");
+$("btnPhPick").addEventListener("click",function(){phInput.removeAttribute("capture");phInput.click();});
+$("btnPhCam").addEventListener("click",function(){phInput.setAttribute("capture","environment");phInput.click();});
+$("btnPhDel").addEventListener("click",function(){
+  if(!cur.photo){toast("还没有照片");return;}
+  cur.photo=""; renderPhoto();
+});
+phInput.addEventListener("change",function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f)return;
+  var fr=new FileReader();
+  fr.onload=function(ev){
+    var im=new Image();
+    im.onload=function(){
+      var max=900,w=im.width,h=im.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+      var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(im,0,0,w,h);
+      cur.photo=cv.toDataURL("image/jpeg",0.82);
+      renderPhoto();
+    };
+    im.src=ev.target.result;
+  };
+  fr.readAsDataURL(f);
+  e.target.value="";
+});
+function renderPhoto(){
+  var p=$("phPrev");
+  p.innerHTML=cur.photo?'<img src="'+cur.photo+'" alt="照片">':"<span>无照片</span>";
+}
+
 /* ---------- 饮水 ---------- */
 function cups(){return D.water[cur.date]||0;}
 function renderWater(){
@@ -302,15 +367,16 @@ $("wMinus").addEventListener("click",function(){
 /* ---------- 保存 ---------- */
 $("btnSave").addEventListener("click",function(){
   if(!cur.food.trim()){toast("先写一句吃了什么");$("fFood").focus();return;}
-  D.items.push({id:Date.now(),date:cur.date,meal:cur.meal,food:cur.food.trim(),kcal:num(cur.kcal)||0,note:cur.note||""});
-  save();
-  cur.food=""; cur.kcal=""; cur.note="";
+  D.items.push({id:Date.now(),date:cur.date,meal:cur.meal,food:cur.food.trim(),kcal:num(cur.kcal)||0,note:cur.note||"",photo:cur.photo||""});
+  if(!save()){ D.items.pop(); render(); return; }
+  cur.food=""; cur.kcal=""; cur.note=""; cur.photo="";
   $("fFood").value=""; $("fKcal").value=""; $("fNote").value="";
-  render(); toast("已记 "+cur.meal+"一笔");
+  render(); renderPhoto(); toast("已记 "+cur.meal+"一笔");
 });
 $("btnClear").addEventListener("click",function(){
-  cur.food=""; cur.kcal=""; cur.note="";
+  cur.food=""; cur.kcal=""; cur.note=""; cur.photo="";
   $("fFood").value=""; $("fKcal").value=""; $("fNote").value="";
+  renderPhoto();
 });
 
 /* ---------- 统计 ---------- */
@@ -347,6 +413,7 @@ function render(){
         (it.note?'<div class="m">'+esc(it.note)+'</div>':'')+
         '</div>'+
         (it.kcal?'<span class="kcal">'+it.kcal+' kcal</span>':'')+
+        (it.photo?'<span class="ph"><img src="'+it.photo+'" alt=""></span>':'')+
         '<button class="del" data-i="'+idx+'">删</button></div>';
     });
     h+='</div>';
@@ -398,7 +465,23 @@ function wrap(x,t,font,maxW){
 function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 var lastBlob=null;
 
-function exportImg(){
+function loadImg(src){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im);};im.onerror=rej;im.src=src;});}
+function drawCover(x,im,dx,dy,dw,dh){
+  var r=Math.max(dw/im.width,dh/im.height), sw=dw/r, sh=dh/r;
+  var sx=(im.width-sw)/2, sy=(im.height-sh)/2;
+  x.save(); rrect(x,dx,dy,dw,dh,10); x.clip();
+  x.drawImage(im,sx,sy,sw,sh,dx,dy,dw,dh); x.restore();
+}
+function exportDay(){
+  var items=dayItems();
+  var phItems=items.filter(function(it){return it.photo;}).slice(0,6);
+  if(!phItems.length){ exportImg([]); return; }
+  Promise.all(phItems.map(function(it){
+    return loadImg(it.photo).then(function(im){return {im:im,it:it};}).catch(function(){return null;});
+  })).then(function(l){ exportImg(l.filter(Boolean)); });
+}
+function exportImg(IMGS){
+  IMGS=IMGS||[];
   var items=dayItems();
   var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
@@ -423,7 +506,10 @@ function exportImg(){
   var bodyH=0;
   groups.forEach(function(g){ bodyH+=54+g.lines.reduce(function(a,l){return a+l.ls.length*40+(l.note?36:0)+18;},0); });
 
-  var H=Math.max(1080, 430+bodyH+180);
+  var PER=5, PS=160, PGAP=14;
+  var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
+  var phH=phRows?(46+phRows*(PS+26)+(phRows-1)*16+34):0;
+  var H=Math.max(1080, 430+bodyH+180+phH);
   cv.height=H;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
@@ -463,6 +549,24 @@ function exportImg(){
   x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
   x.fillText((kc?("热量 "+kc+" kcal · "):"")+"饮水 "+cups()+" 杯（"+cups()*250+" ml）"+(cups()>=8?" · 达标 ✓":""),W/2,y); x.textAlign="left";
 
+  /* 当日照片 */
+  if(phRows){
+    y+=10;
+    x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke();
+    y+=54;
+    x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center"; x.fillText("今 天 吃 了 这 些",W/2,y); x.textAlign="left";
+    y+=42;
+    IMGS.forEach(function(o,i){
+      var r=Math.floor(i/PER), c=i%PER;
+      var px=M+c*(PS+PGAP), py=y+r*(PS+26+16);
+      drawCover(x,o.im,px,py,PS,PS);
+      x.strokeStyle=brd; x.lineWidth=1.5; rrect(x,px,py,PS,PS,10); x.stroke();
+      x.fillStyle=mut; x.font="20px "+SER;
+      x.fillText(o.it.meal+"　"+(o.it.kcal?o.it.kcal+" kcal":""),px,py+PS+22);
+    });
+    y += phRows*(PS+26+16);
+  }
+
   x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
   x.fillText("Calme · 每日饮食　"+cur.date,W/2,H-CY-40); x.textAlign="left";
 
@@ -472,7 +576,7 @@ function exportImg(){
 
 $("btnExport").addEventListener("click",function(){
   if(!dayItems().length&&!cups()){toast("这一天还没有记录");return;}
-  exportImg();
+  exportDay();
 });
 $("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
 $("ovShare").addEventListener("click",function(){
