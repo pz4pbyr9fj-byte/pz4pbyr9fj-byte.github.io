@@ -1,4 +1,4 @@
-var CACHE = "wishcard-v11";
+var CACHE = "wishcard-v12";
 var FILES = ["./", "./index.html", "./record.html", "./spend.html", "./backup.html", "./food.html", "./todo.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", function (e) {
