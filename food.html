@@ -556,8 +556,8 @@ function exportImg(IMGS){
   var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
   var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
-  var cv=document.createElement("canvas"); cv.width=W; cv.height=2600;
-  var mx=cv.getContext("2d");
+  var cvm=document.createElement("canvas"); cvm.width=10; cvm.height=10;
+  var mx=cvm.getContext("2d");
 
   /* 预测量行数定高度 */
   var groups=[];
@@ -573,18 +573,13 @@ function exportImg(IMGS){
     });
     groups.push({meal:m,lines:lines});
   });
-  var bodyH=0;
-  groups.forEach(function(g){ bodyH+=54+g.lines.reduce(function(a,l){return a+l.ls.length*40+(l.note?36:0)+18;},0); });
-
   var PER=5, PS=160, PGAP=14;
   var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
-  var phH=phRows?(46+phRows*(PS+26)+(phRows-1)*16+34):0;
-  var H=Math.max(1080, 430+bodyH+210+phH);
-  cv.height=H;
   var P=THEMES[TH]||THEMES.warm;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
-  var x=cv.getContext("2d");
 
+  /* 先量一遍真实高度，再正式绘制：避免内容压到页脚 */
+  function paint(x,H,withFooter){
   x.fillStyle=P.bg; x.fillRect(0,0,W,H);
   x.save(); x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
   x.fillStyle="#FFFFFF"; rrect(x,CX,CY,W-120,H-120,24); x.fill(); x.restore();
@@ -599,6 +594,7 @@ function exportImg(IMGS){
   if(!groups.length){
     x.fillStyle=P.ph; x.font="28px "+SER; x.textAlign="center";
     x.fillText("这一天还没有记录",W/2,y+40); x.textAlign="left";
+    y+=100;
   }
   groups.forEach(function(g){
     x.fillStyle=acc; x.font="700 32px "+SER; x.fillText(MEAL_ICON[g.meal]+" "+g.meal,M,y);
@@ -643,8 +639,18 @@ function exportImg(IMGS){
     y += phRows*(PS+26+16);
   }
 
-  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
-  x.fillText("Calme · 每日饮食　"+cur.date,W/2,H-CY-40); x.textAlign="left";
+  if(withFooter){
+    x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+    x.fillText("Calme · 每日饮食　"+cur.date,W/2,H-CY-40); x.textAlign="left";
+  }
+  return y;
+  }
+
+  var probe=document.createElement("canvas"); probe.width=W; probe.height=4200;
+  var endY=paint(probe.getContext("2d"),4200,false);
+  var H=Math.max(1080, endY+150);
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  paint(cv.getContext("2d"),H,true);
 
   lastBlob=null;
   cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
