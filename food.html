@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="每日饮食">
+<meta name="theme-color" content="#EEF3F8">
+<title>每日饮食记录卡</title>
+<style>
+:root{
+  --ink:#3A3630; --ink2:#4A443C; --muted:#5C574E;
+  --accent:#703D2D; --line:#D8CCB8; --border:#E4DCCF;
+  --paper:#FFFFFF; --bg:#F6F2EA; --soft:#FBF8F2;
+  --ok:#5E7050; --ph:#B7AC97; --chk:#B8A88A; --warn:#A33B22;
+  --badgeA:#F3E4DE; --badgeB:#E7EDE2; --badgeC:#EDEAE4;
+}
+html[data-theme="blue"]{
+  --ink:#2F3A46; --ink2:#42505D; --muted:#61707F;
+  --accent:#2C5F92; --line:#BCCFE2; --border:#D2DFEC;
+  --paper:#FFFFFF; --bg:#EEF3F8; --soft:#F5F9FD;
+  --ok:#4A7358; --ph:#9FB0C0; --chk:#9DB2C6; --warn:#A8452E;
+  --badgeA:#DFE9F3; --badgeB:#E3EEE6; --badgeC:#E8EBEF;
+}
+html[data-theme="green"]{
+  --ink:#2E3A2E; --ink2:#42533F; --muted:#5F7060;
+  --accent:#3F6B45; --line:#B6CDAE; --border:#CEDDC8;
+  --paper:#FFFFFF; --bg:#EDF3EC; --soft:#F5FAF4;
+  --ok:#4A7358; --ph:#A3B69D; --chk:#A2BCA0; --warn:#A8452E;
+  --badgeA:#E2EDE1; --badgeB:#E7EDE2; --badgeC:#EDEAE4;
+}
+.themes{display:flex; gap:6px; justify-content:center; margin-top:10px;}
+.themes button{
+  font-family:inherit; font-size:12px; padding:5px 16px; border-radius:20px;
+  border:1px solid var(--border); background:var(--paper); color:var(--muted); letter-spacing:.1em;
+}
+.themes button.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Songti SC","STSongti-SC-Regular","Noto Serif SC","Songti TC",serif;
+  padding:12px 14px calc(28px + env(safe-area-inset-bottom));
+  max-width:520px; margin:0 auto; -webkit-font-smoothing:antialiased;
+}
+.head{text-align:center; padding:6px 0 2px;}
+.head .kicker{font-size:12px; letter-spacing:.35em; color:var(--muted);}
+.head h1{font-size:26px; margin:6px 0 2px; font-weight:700; letter-spacing:.12em;}
+.head .sub{font-size:13px; color:var(--muted); line-height:1.7;}
+.card{background:var(--paper); border:1.5px solid var(--border); border-radius:14px; padding:18px 16px 16px; margin-top:12px;}
+.sec{margin-top:14px;} .sec:first-child{margin-top:0;}
+label.lab{display:block; font-size:13px; color:var(--ink2); margin:0 0 6px 2px;}
+input[type=text],input[type=number],input[type=date],input[type=time],textarea{
+  width:100%; font-size:16px; font-family:inherit; color:var(--ink);
+  background:var(--soft); border:none; border-bottom:1.5px solid var(--line);
+  border-radius:6px 6px 0 0; padding:9px 10px 8px; outline:none; -webkit-appearance:none; appearance:none;
+}
+input:focus,textarea:focus{border-bottom-color:var(--accent); background:#fff;}
+input::placeholder,textarea::placeholder{color:var(--ph);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.dateBar{display:flex; align-items:center; gap:10px;}
+.dateBar button{
+  flex:0 0 46px; font-family:inherit; font-size:18px; padding:8px 0; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);
+}
+.dateBar input{flex:1; text-align:center;}
+.dateBar .today{flex:0 0 auto; font-family:inherit; font-size:12.5px; padding:9px 12px; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
+/* 餐次 */
+.meals{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.meals button{font-family:inherit; font-size:15px; padding:11px 4px; border-radius:9px;
+  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
+.meals button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+/* 饮水 */
+.water{display:flex; align-items:center; gap:14px; background:var(--soft);
+  border:1px solid var(--border); border-radius:12px; padding:12px 14px;}
+.water .wl{flex:1;}
+.water .wl .t{font-size:13px; color:var(--ink2);}
+.water .wl .v{font-size:22px; font-weight:700; color:var(--accent); margin-top:2px;}
+.water .wl .m{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.water button{flex:0 0 44px; font-family:inherit; font-size:20px; padding:9px 0; border-radius:50%;
+  border:1.5px solid var(--line); background:#fff; color:var(--ink2);}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+.actions button{font-family:inherit; font-size:15px; letter-spacing:.06em; padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);}
+#btnSave{background:var(--accent); color:#fff;}
+#btnClear{background:#fff; color:var(--accent);}
+/* 小结 */
+.total{margin-top:14px; background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:14px 14px 10px;}
+.total .lab2{font-size:12.5px; color:var(--muted); letter-spacing:.15em;}
+.total .num{font-size:34px; font-weight:700; color:var(--accent); line-height:1.3; margin-top:2px;}
+.total .cnt{font-size:12px; color:var(--muted);}
+.mealcov{display:flex; gap:8px; margin-top:12px;}
+.mealcov .mc{flex:1; text-align:center; font-size:12.5px; padding:8px 2px; border-radius:9px;
+  border:1px solid var(--border); background:#fff; color:var(--ph);}
+.mealcov .mc.has{color:var(--ok); border-color:var(--ok); background:var(--badgeB);}
+/* 列表 */
+.listTitle{display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-size:14px; color:var(--ink2); letter-spacing:.1em;}
+.listTitle .c{font-size:12.5px; color:var(--muted);}
+.group .gt{font-size:13px; color:var(--accent); letter-spacing:.15em; margin:14px 0 4px;}
+.group:first-child .gt{margin-top:2px;}
+.item{display:flex; gap:12px; padding:11px 0; border-bottom:1px dashed var(--border); align-items:flex-start;}
+.item .info{flex:1; min-width:0;}
+.item .info .n{font-size:15px; color:var(--ink); line-height:1.6;}
+.item .info .m{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.7;}
+.item .kcal{flex:0 0 auto; font-size:15px; color:var(--muted); font-variant-numeric:tabular-nums; padding-top:2px;}
+.item .del{flex:0 0 auto; font-family:inherit; font-size:11.5px; padding:5px 8px; border-radius:7px;
+  border:1px solid var(--border); background:#fff; color:var(--ph);}
+.empty{font-size:12.5px; color:var(--ph); padding:14px 2px; text-align:center;}
+.quote{text-align:center; font-size:12.5px; color:var(--muted); margin:16px 0 2px;}
+.nav{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:6px; flex-wrap:wrap;}
+.nav a{font-size:14px; color:var(--accent); text-decoration:none; padding:9px 14px;
+  border:1px solid var(--border); border-radius:22px; background:var(--paper);
+  font-family:inherit; letter-spacing:.02em; -webkit-tap-highlight-color:transparent;}
+.nav a:active{background:var(--soft);}
+/* 预览层 */
+#ov{position:fixed; inset:0; background:rgba(40,35,28,.72); z-index:50; display:none; flex-direction:column;
+  align-items:center; justify-content:center; padding:18px;}
+#ov.show{display:flex;}
+#ov img{max-width:100%; max-height:62vh; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.4);}
+#ov .tip{color:#F1E9DA; font-size:13px; margin:12px 0 10px; text-align:center; line-height:1.7;}
+#ov .row{display:flex; gap:10px;}
+#ov button{font-family:inherit; font-size:14px; padding:10px 18px; border-radius:9px; border:none;}
+#ovShare,#ovCopy{background:#fff; color:var(--ink);}
+#ovClose{background:transparent; color:#F1E9DA; border:1px solid #8C8272 !important;}
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:34px; background:rgba(58,54,48,.92); color:#F6F2EA;
+  font-size:13px; padding:10px 16px; border-radius:9px; opacity:0; transition:opacity .25s; z-index:99; pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="kicker">CALME · 饮食日记</div>
+  <h1>每 日 饮 食 记 录</h1>
+  <div class="sub">三餐和加餐随手记，<br>顺便看看今天喝了多少水。</div>
+  <div class="themes" id="themes">
+    <button data-t="warm" type="button">米</button><button data-t="blue" type="button">蓝</button><button data-t="green" type="button">绿</button>
+  </div>
+</div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="spend.html">当日消费</a><a href="record.html">种草记录</a><a href="todo.html">想做的事</a><a href="backup.html">数据备份</a></div>
+
+<div class="card">
+  <div class="sec">
+    <label class="lab">日期</label>
+    <div class="dateBar">
+      <button id="prevDay" type="button">‹</button>
+      <input type="date" id="fDate">
+      <button id="nextDay" type="button">›</button>
+      <button class="today" id="btnToday" type="button">今天</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <label class="lab">餐次</label>
+    <div class="meals" id="meals">
+      <button data-v="早餐" type="button">早餐</button>
+      <button data-v="午餐" type="button">午餐</button>
+      <button data-v="晚餐" type="button">晚餐</button>
+      <button data-v="加餐" type="button">加餐</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <label class="lab" for="fFood">吃了什么</label>
+    <input type="text" id="fFood" placeholder="燕麦牛奶 + 一个鸡蛋">
+  </div>
+
+  <div class="sec grid2">
+    <div>
+      <label class="lab" for="fKcal">热量 kcal（可不填）</label>
+      <input type="number" id="fKcal" inputmode="numeric" placeholder="0">
+    </div>
+    <div>
+      <label class="lab" for="fNote">备注（可不填）</label>
+      <input type="text" id="fNote" placeholder="外卖 / 自己做 / 和谁">
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="water">
+      <div class="wl">
+        <div class="t">今日饮水</div>
+        <div class="v" id="wVal">0 杯</div>
+        <div class="m" id="wMl">约 0 ml · 建议 8 杯</div>
+      </div>
+      <button id="wMinus" type="button">−</button>
+      <button id="wPlus" type="button">＋</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="btnSave" type="button">记一笔</button>
+    <button id="btnClear" type="button">清空输入</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="total">
+    <div class="lab2">当日小结</div>
+    <div class="num" id="sum">0 笔</div>
+    <div class="cnt" id="cnt"></div>
+  </div>
+  <div class="mealcov" id="mealcov"></div>
+</div>
+
+<div class="listTitle">
+  <span>当天吃了什么</span>
+  <span class="c" id="listCount"></span>
+</div>
+<div class="card" id="listCard">
+  <div id="list"></div>
+</div>
+
+<div class="card">
+  <div class="actions" style="margin-top:0; grid-template-columns:1fr;">
+    <button id="btnExport" type="button" style="background:var(--accent); color:#fff;">生成当日饮食卡图片</button>
+  </div>
+  <div class="actions" style="grid-template-columns:1fr;">
+    <button id="btnText" type="button" style="background:#fff; color:var(--accent);">复制文字版</button>
+  </div>
+</div>
+
+<div class="quote">好好吃饭，是认真生活的第一步。</div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="spend.html">当日消费</a><a href="record.html">种草记录</a><a href="todo.html">想做的事</a><a href="backup.html">数据备份</a></div>
+
+<div id="ov">
+  <img id="ovImg" alt="每日饮食卡图片">
+  <div class="tip">长按图片 → 存入照片 / 发给闺蜜</div>
+  <div class="row">
+    <button id="ovShare" type="button">分享…</button>
+    <button id="ovClose" type="button">关闭</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var LS="calme_food_v1";
+var $=function(id){return document.getElementById(id);};
+function load(){try{var s=JSON.parse(localStorage.getItem(LS));if(s&&s.items)return s;}catch(e){}return {items:[],water:{}};}
+function save(){localStorage.setItem(LS,JSON.stringify(D));}
+var D=load();
+
+/* ---------- 配色（米 / 蓝 / 绿） ---------- */
+var THEMES={
+  warm:{bg:"#F6F2EA",paper:"#FFFFFF",border:"#E4DCCF",line:"#D8CCB8",
+        ink:"#3A3630",ink2:"#4A443C",muted:"#5C574E",accent:"#703D2D",chk:"#B8A88A",ph:"#C9BFA9"},
+  blue:{bg:"#EEF3F8",paper:"#FFFFFF",border:"#D2DFEC",line:"#BCCFE2",
+        ink:"#2F3A46",ink2:"#42505D",muted:"#61707F",accent:"#2C5F92",chk:"#9DB2C6",ph:"#A8B8C7"},
+  green:{bg:"#EDF3EC",paper:"#FFFFFF",border:"#CEDDC8",line:"#B6CDAE",
+        ink:"#2E3A2E",ink2:"#42533F",muted:"#5F7060",accent:"#3F6B45",chk:"#A2BCA0",ph:"#A8BCA2"}
+};
+var TH="blue";
+try{ if(localStorage.getItem("calme_theme2")) TH=localStorage.getItem("calme_theme2"); }catch(e){}
+function applyTheme(t){
+  TH=t; try{localStorage.setItem("calme_theme2",t);}catch(e){}
+  document.documentElement.setAttribute("data-theme",t==="warm"?"":t);
+  document.querySelectorAll("#themes button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
+}
+
+var MEALS=["早餐","午餐","晚餐","加餐"];
+var MEAL_ICON={"早餐":"☀","午餐":"◐","晚餐":"☾","加餐":"✿"};
+var cur={date:"",meal:"早餐",food:"",kcal:"",note:""};
+function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
+function shiftDate(s,n){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);d.setDate(d.getDate()+n);
+  var p=function(x){return (x<10?"0":"")+x;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
+function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1800);}
+
+/* ---------- 输入 ---------- */
+cur.date=today();
+$("fDate").value=cur.date;
+$("fDate").addEventListener("change",function(){cur.date=$("fDate").value;render();});
+$("prevDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,-1);$("fDate").value=cur.date;render();});
+$("nextDay").addEventListener("click",function(){cur.date=shiftDate(cur.date,1);$("fDate").value=cur.date;render();});
+$("btnToday").addEventListener("click",function(){cur.date=today();$("fDate").value=cur.date;render();});
+$("fFood").addEventListener("input",function(){cur.food=$("fFood").value;});
+$("fKcal").addEventListener("input",function(){cur.kcal=$("fKcal").value;});
+$("fNote").addEventListener("input",function(){cur.note=$("fNote").value;});
+$("meals").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; cur.meal=b.dataset.v; renderMeals();
+});
+function renderMeals(){
+  document.querySelectorAll("#meals button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.meal);});
+}
+
+/* ---------- 饮水 ---------- */
+function cups(){return D.water[cur.date]||0;}
+function renderWater(){
+  $("wVal").textContent=cups()+" 杯";
+  $("wMl").textContent="约 "+cups()*250+" ml · 建议 8 杯"+(cups()>=8?" · 达标 ✓":"");
+}
+$("wPlus").addEventListener("click",function(){D.water[cur.date]=cups()+1;save();renderWater();});
+$("wMinus").addEventListener("click",function(){
+  if(cups()<=0)return;
+  D.water[cur.date]=cups()-1; if(!D.water[cur.date])delete D.water[cur.date];
+  save(); renderWater();
+});
+
+/* ---------- 保存 ---------- */
+$("btnSave").addEventListener("click",function(){
+  if(!cur.food.trim()){toast("先写一句吃了什么");$("fFood").focus();return;}
+  D.items.push({id:Date.now(),date:cur.date,meal:cur.meal,food:cur.food.trim(),kcal:num(cur.kcal)||0,note:cur.note||""});
+  save();
+  cur.food=""; cur.kcal=""; cur.note="";
+  $("fFood").value=""; $("fKcal").value=""; $("fNote").value="";
+  render(); toast("已记 "+cur.meal+"一笔");
+});
+$("btnClear").addEventListener("click",function(){
+  cur.food=""; cur.kcal=""; cur.note="";
+  $("fFood").value=""; $("fKcal").value=""; $("fNote").value="";
+});
+
+/* ---------- 统计 ---------- */
+function dayItems(){return D.items.filter(function(it){return it.date===cur.date;});}
+function render(){
+  renderMeals(); renderWater();
+  var items=dayItems();
+  var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
+  $("sum").textContent=items.length?(items.length+" 笔"):"0 笔";
+  $("cnt").textContent=items.length
+    ? ("热量 "+(kc?kc+" kcal":"未记")+" · 饮水 "+cups()+" 杯（"+cups()*250+" ml）"+(cups()>=8?" · 达标 ✓":""))
+    : (cur.date+" 还没有记录");
+
+  var cov=MEALS.slice(0,3).map(function(m){
+    var has=items.some(function(it){return it.meal===m;});
+    return '<div class="mc'+(has?" has":"")+'">'+(has?"✓ ":"")+m+'</div>';
+  }).join("");
+  var extra=items.filter(function(it){return it.meal==="加餐";}).length;
+  if(extra) cov+='<div class="mc has">✓ 加餐 ×'+extra+'</div>';
+  $("mealcov").innerHTML=cov;
+
+  $("listCount").textContent=items.length?("共 "+items.length+" 笔"):"";
+  var L=$("list");
+  if(!items.length){L.innerHTML='<div class="empty">这一天还没有记录。吃饱了才有力气减肥。</div>';return;}
+  var h="";
+  MEALS.forEach(function(m){
+    var g=items.filter(function(it){return it.meal===m;});
+    if(!g.length)return;
+    h+='<div class="group"><div class="gt">'+MEAL_ICON[m]+' '+m+'</div>';
+    g.forEach(function(it){
+      var idx=D.items.indexOf(it);
+      h+='<div class="item"><div class="info">'+
+        '<div class="n">'+esc(it.food)+'</div>'+
+        (it.note?'<div class="m">'+esc(it.note)+'</div>':'')+
+        '</div>'+
+        (it.kcal?'<span class="kcal">'+it.kcal+' kcal</span>':'')+
+        '<button class="del" data-i="'+idx+'">删</button></div>';
+    });
+    h+='</div>';
+  });
+  L.innerHTML=h;
+}
+$("list").addEventListener("click",function(e){
+  var b=e.target.closest("button.del"); if(!b)return;
+  if(!confirm("删除这一笔？"))return;
+  D.items.splice(+b.dataset.i,1); save(); render();
+});
+
+/* ---------- 文字版 ---------- */
+function textOf(){
+  var items=dayItems();
+  var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
+  var L=[];
+  L.push("每日饮食 · "+cur.date);
+  L.push("共 "+items.length+" 笔"+(kc?" · 热量 "+kc+" kcal":"")+" · 饮水 "+cups()+" 杯");
+  MEALS.forEach(function(m){
+    var g=items.filter(function(it){return it.meal===m;});
+    if(!g.length)return;
+    L.push("—— "+m+" ——");
+    g.forEach(function(it){L.push(it.food+(it.kcal?"（"+it.kcal+" kcal）":"")+(it.note?" · "+it.note:""));});
+  });
+  return L.join("\n");
+}
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){toast("已复制，去微信粘贴");},function(){fallbackCopy(t);});
+  }else fallbackCopy(t);
+  function fallbackCopy(t){
+    var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy"); toast("已复制，去微信粘贴");}catch(e){toast("复制失败，请手动选择");}
+    document.body.removeChild(ta);
+  }
+}
+$("btnText").addEventListener("click",function(){ copyText(textOf()); });
+
+/* ---------- 生成卡片图片 ---------- */
+function wrap(x,t,font,maxW){
+  x.font=font; var out=[],c="";
+  for(var i=0;i<t.length;i++){
+    if(x.measureText(c+t[i]).width>maxW){out.push(c);c=t[i];}else c+=t[i];
+  }
+  if(c)out.push(c); return out;
+}
+function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+var lastBlob=null;
+
+function exportImg(){
+  var items=dayItems();
+  var kc=0; items.forEach(function(it){kc+=(it.kcal||0);});
+  var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
+  var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=2600;
+  var mx=cv.getContext("2d");
+
+  /* 预测量行数定高度 */
+  var groups=[];
+  MEALS.forEach(function(m){
+    var g=items.filter(function(it){return it.meal===m;});
+    if(!g.length)return;
+    var lines=[];
+    g.forEach(function(it){
+      mx.font="28px "+SER;
+      var suffix=it.kcal?"　"+it.kcal+" kcal":"";
+      var ls=wrap(mx,it.food+suffix,"28px "+SER,IW-40);
+      lines.push({ls:ls,note:it.note||""});
+    });
+    groups.push({meal:m,lines:lines});
+  });
+  var bodyH=0;
+  groups.forEach(function(g){ bodyH+=54+g.lines.reduce(function(a,l){return a+l.ls.length*40+(l.note?36:0)+18;},0); });
+
+  var H=Math.max(1080, 430+bodyH+180);
+  cv.height=H;
+  var P=THEMES[TH]||THEMES.warm;
+  var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border;
+  var x=cv.getContext("2d");
+
+  x.fillStyle=P.bg; x.fillRect(0,0,W,H);
+  x.save(); x.shadowColor="rgba(0,0,0,.10)"; x.shadowBlur=24; x.shadowOffsetY=6;
+  x.fillStyle="#FFFFFF"; rrect(x,CX,CY,W-120,H-120,24); x.fill(); x.restore();
+  x.strokeStyle=brd; x.lineWidth=2; rrect(x,CX,CY,W-120,H-120,24); x.stroke();
+
+  var y=CY+104;
+  x.fillStyle=ink; x.font="700 58px "+SER; x.textAlign="center"; x.fillText("每 日 饮 食",W/2,y); x.textAlign="left";
+  y+=52;
+  x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center"; x.fillText(cur.date,W/2,y); x.textAlign="left";
+  y+=64;
+
+  if(!groups.length){
+    x.fillStyle=P.ph; x.font="28px "+SER; x.textAlign="center";
+    x.fillText("这一天还没有记录",W/2,y+40); x.textAlign="left";
+  }
+  groups.forEach(function(g){
+    x.fillStyle=acc; x.font="700 32px "+SER; x.fillText(MEAL_ICON[g.meal]+" "+g.meal,M,y);
+    y+=54;
+    g.lines.forEach(function(l){
+      x.fillStyle=ink; x.font="28px "+SER;
+      l.ls.forEach(function(ln,j){ x.fillText(ln,M+(j?36:0),y+j*40); });
+      y+=l.ls.length*40;
+      if(l.note){ x.fillStyle=mut; x.font="24px "+SER; x.fillText("· "+l.note,M+36,y); y+=36; }
+      y+=18;
+    });
+    y+=8;
+    x.strokeStyle=line; x.lineWidth=1.5; x.beginPath(); x.moveTo(M,y-8); x.lineTo(M+IW,y-8); x.stroke();
+    y+=28;
+  });
+
+  y+=6;
+  x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
+  x.fillText((kc?("热量 "+kc+" kcal · "):"")+"饮水 "+cups()+" 杯（"+cups()*250+" ml）"+(cups()>=8?" · 达标 ✓":""),W/2,y); x.textAlign="left";
+
+  x.fillStyle=P.ph; x.font="22px "+SER; x.textAlign="center";
+  x.fillText("Calme · 每日饮食　"+cur.date,W/2,H-CY-40); x.textAlign="left";
+
+  lastBlob=null;
+  cv.toBlob(function(b){ lastBlob=b; $("ovImg").src=URL.createObjectURL(b); $("ov").classList.add("show"); },"image/png");
+}
+
+$("btnExport").addEventListener("click",function(){
+  if(!dayItems().length&&!cups()){toast("这一天还没有记录");return;}
+  exportImg();
+});
+$("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
+$("ovShare").addEventListener("click",function(){
+  if(!lastBlob)return;
+  var f=new File([lastBlob],"每日饮食.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});}
+  else{
+    var a=document.createElement("a"); a.href=URL.createObjectURL(lastBlob); a.download="每日饮食.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+});
+
+document.getElementById("themes").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b)return; applyTheme(b.dataset.t);
+});
+applyTheme(TH);
+
+render();
+</script>
+</body>
+</html>
