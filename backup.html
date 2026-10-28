@@ -123,6 +123,19 @@ input[type=file]{display:none;}
   <div class="res" id="res"></div>
 </div>
 
+<div class="card">
+  <h2>分享给朋友</h2>
+  <div class="d">
+    这个网址可以直接发给朋友，她打开就是同一套卡片：心愿卡、种草记录、当日消费、每日饮食、想做的事。
+    <br><br>
+    <b>两个人各记各的，互不干扰。</b>记录只存在各自手机的浏览器里，没有账号、不上传服务器——你看不到她的，她也看不到你的。她第一次打开是空白的一套，从零开始记。
+    <br><br>
+    <b>唯一会「串」的地方：</b>如果她导入了你的备份码，你的记录会<b>合并</b>进她的卡里（反过来也一样）。想把某张心愿卡给她看、或者互相抄作业，就用这个办法；只是想各记各的，那别去导对方的备份码就好。
+  </div>
+  <button class="act ghost" id="btnCopyUrl" type="button">复制这个网址</button>
+  <div class="note">她打开后：Safari → 底部「分享 ↑」→ 添加到主屏幕，就能像 App 一样用了，断网也能开。</div>
+</div>
+
 <div class="quote">备份一次，换什么都不怕。</div>
 <div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="todo.html">想做的事</a></div>
 
@@ -303,6 +316,19 @@ $("fileIn").addEventListener("change",function(e){
   fr.onload=function(ev){ doImport(String(ev.target.result)); };
   fr.readAsText(f);
   e.target.value="";
+});
+
+$("btnCopyUrl").addEventListener("click",function(){
+  var u=location.origin+location.pathname.replace(/backup\.html$/,"");
+  function fallback(){
+    var ta=document.createElement("textarea"); ta.value=u; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy");toast("已复制网址");}catch(e){toast(u);}
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(u).then(function(){toast("已复制网址");},fallback);
+  }else{fallback();}
 });
 
 document.getElementById("themes").addEventListener("click",function(e){
