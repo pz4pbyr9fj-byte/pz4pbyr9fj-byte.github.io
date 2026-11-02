@@ -102,9 +102,9 @@ input[type=file]{display:none;}
 
 <div class="card">
   <h2>导出</h2>
-  <div class="d">「完整备份」含照片，会存成一个文件；「精简备份」去掉照片，是一段可以直接粘贴的文字。</div>
-  <button class="act fill" id="btnFull" type="button">导出完整备份（含照片）</button>
-  <button class="act ghost" id="btnText" type="button">复制精简备份码（不含照片）</button>
+  <div class="d">「完整备份」存成一个文件；「精简备份」是一段可以直接粘贴的文字。</div>
+  <button class="act fill" id="btnFull" type="button">导出完整备份（文件）</button>
+  <button class="act ghost" id="btnText" type="button">复制精简备份码（文字）</button>
   <input type="file" id="fileIn" accept=".json,application/json,text/plain">
   <div class="note">完整备份会下载到「文件」App 的下载项里，也可以用 AirDrop 传到别处；精简备份码可以粘贴到微信收藏或备忘录。</div>
 </div>
@@ -175,17 +175,11 @@ function stat(){
   set("sParW",parW+" 笔",!parW);
   set("sParG",parG+" 笔",!parG);
 
-  var full=JSON.stringify(build(true)||{});
-  var sp0=read(KEYS.spend)||{items:[]};
-  var f0=read(KEYS.food)||{items:[],water:{}};
-  var r0=read(KEYS.res)||{items:[]};
-  var photos=(l.items||[]).filter(function(it){return it.photo;}).length
-            +(sp0.items||[]).filter(function(it){return it.photo;}).length
-            +(f0.items||[]).filter(function(it){return it.photo;}).length
-            +(r0.items||[]).filter(function(it){return it.photo;}).length
-            +(pr.items||[]).filter(function(it){return it.photo;}).length
-            +(sk.items||[]).filter(function(it){return it.photo;}).length;
-  $("sizeNote").textContent="完整备份约 "+Math.round(full.length/1024)+" KB"+(photos?("（含 "+photos+" 张照片）"):"（没有照片）");
+  var used=0;
+  Object.keys(KEYS).forEach(function(k){
+    try{ var v=localStorage.getItem(KEYS[k]); if(v) used+=v.length; }catch(e){}
+  });
+  $("sizeNote").textContent="本机数据约 "+Math.max(1,Math.round(used/1024))+" KB";
 }
 function set(id,txt,zero){var el=$(id);el.textContent=txt;el.className="v"+(zero?" zero":"");}
 
@@ -289,6 +283,14 @@ function doImport(txt){
   var d=obj&&obj.data?obj.data:null;
   if(!d){ fail("没找到备份数据，可能复制得不完整"); return; }
 
+  /* 照片功能已移除：导入时丢弃旧备份里的图片数据，不占本地空间 */
+  Object.keys(d).forEach(function(k){
+    var v=d[k];
+    if(v&&v.items&&v.items.length){
+      v.items.forEach(function(it){ delete it.photo; delete it.photoRemoved; });
+    }
+  });
+
   var added={arch:0,log:0,spend:0,food:0,res:0,todo:0,par:0,sk:0};
   /* 心愿卡 */
   if(d[KEYS.wish]){
@@ -363,8 +365,7 @@ function doImport(txt){
   el.className="res";
   el.innerHTML="导入完成：新增 归档 "+added.arch+" 张 · 种草 "+added.log+" 条 · 消费 "+added.spend+
     " 笔 · 护肤 "+added.sk+" 件 · 饮食 "+added.food+" 笔 · 科研 "+added.res+" 项 · 想做的事 "+added.todo+
-    " 件 · 给爸妈 "+added.par+" 笔"+
-    (obj.withPhoto===false?'<br><span style="color:var(--ph)">（这份备份不含照片）</span>':"");
+    " 件 · 给爸妈 "+added.par+" 笔";
   stat();
   toast("已导入");
   function fail(m){var el=$("res");el.className="res bad";el.textContent=m;}
