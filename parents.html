@@ -361,11 +361,11 @@ phInput.addEventListener("change",function(e){
   fr.onload=function(ev){
     var im=new Image();
     im.onload=function(){
-      var max=900,w=im.width,h=im.height;
+      var max=800,w=im.width,h=im.height;
       if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
       var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
       cv.getContext("2d").drawImage(im,0,0,w,h);
-      cur.photo=cv.toDataURL("image/jpeg",0.82);
+      cur.photo=cv.toDataURL("image/jpeg",0.75);
       renderPhoto();
     };
     im.src=ev.target.result;
