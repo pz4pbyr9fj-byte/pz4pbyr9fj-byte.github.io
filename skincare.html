@@ -72,23 +72,6 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .cats button{font-family:inherit; font-size:14.5px; padding:11px 3px; border-radius:9px;
   border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
 .cats button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
-/* 照片 */
-.phBox{display:flex; gap:12px; align-items:flex-start;}
-.phPrev{
-  flex:0 0 96px; width:96px; height:96px; border-radius:10px; border:1.5px dashed var(--line);
-  background:var(--soft); display:flex; align-items:center; justify-content:center; overflow:hidden;
-  color:var(--ph); font-size:11.5px; text-align:center; line-height:1.5;
-}
-.phPrev img{width:100%; height:100%; object-fit:cover; display:block;}
-.phBtns{flex:1; display:flex; flex-direction:column; gap:8px;}
-.phBtns button{
-  font-family:inherit; font-size:14px; padding:9px 12px; border-radius:9px;
-  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2); width:100%;
-}
-.hintline{font-size:11.5px; color:var(--ph); line-height:1.6; margin-top:6px;}
-.item .ph{flex:0 0 44px; width:44px; height:44px; border-radius:8px; overflow:hidden;
-  border:1px solid var(--border); background:var(--soft);}
-.item .ph img{width:100%; height:100%; object-fit:cover; display:block;}
 /* 合计 */
 .total{margin-top:14px; background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:14px 14px 10px;}
 .total .lab2{font-size:12.5px; color:var(--muted); letter-spacing:.15em;}
@@ -215,20 +198,6 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <input type="text" id="fNote" placeholder="容量 / 色号 / 赠品小样">
   </div>
 
-  <div class="sec">
-    <label class="lab">照片（可不填）</label>
-    <div class="phBox">
-      <div class="phPrev" id="phPrev"><span>无照片</span></div>
-      <div class="phBtns">
-        <button id="btnPhCam" type="button">拍照</button>
-        <button id="btnPhPick" type="button">从相册选</button>
-        <button id="btnPhDel" type="button">清除照片</button>
-      </div>
-    </div>
-    <input type="file" id="phFile" accept="image/*" hidden>
-    <div class="hintline">拍产品、拍小票都行。照片存在手机本地，不会上传。</div>
-  </div>
-
   <div class="actions">
     <button id="btnSave" type="button">记一笔</button>
     <button id="btnClear" type="button">清空输入</button>
@@ -293,6 +262,15 @@ function save(){
   catch(e){ toast("手机存储空间满了 · 去「数据备份」导出后删掉一些旧照片再试"); return false; }
 }
 var D=load();
+/* 照片功能已移除：清掉历史记录里残留的图片数据，腾出本地空间 */
+(function(){
+  var dirty=false;
+  (D.items||[]).forEach(function(it){
+    if(it.photo!==undefined){delete it.photo;dirty=true;}
+    if(it.photoRemoved!==undefined){delete it.photoRemoved;dirty=true;}
+  });
+  if(dirty){ try{ localStorage.setItem(LS,JSON.stringify(D)); }catch(e){} }
+})();
 
 /* ---------- 配色 ---------- */
 var THEMES={
@@ -310,7 +288,7 @@ function applyTheme(t){
 }
 
 var CATS=["洁面","水","精华","面霜","防晒","面膜","彩妆","洗护","其他"];
-var cur={date:"",cat:"精华",brand:"",name:"",amt:"",ch:"",note:"",photo:""};
+var cur={date:"",cat:"精华",brand:"",name:"",amt:"",ch:"",note:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
 function fmt(n){var v=Math.round(n*100)/100;return v.toLocaleString("zh-CN");}
@@ -352,7 +330,7 @@ function migrateFromSpend(){
     if(had[src])return;
     D.items.push({
       id:it.id, src:src, date:it.date||today(), cat:guessCat(it.note), brand:"",
-      name:it.note||"护肤品", amt:it.amt||0, ch:"", note:"", photo:it.photo||""
+      name:it.note||"护肤品", amt:it.amt||0, ch:"", note:""
     });
     added++;
   });
@@ -378,37 +356,6 @@ function allStat(){return statOf(D.items);}
 function firstDateOf(list){
   if(!list.length)return "";
   return list.map(function(it){return it.date||"";}).filter(Boolean).sort()[0];
-}
-
-/* ---------- 照片 ---------- */
-var phInput=$("phFile");
-$("btnPhPick").addEventListener("click",function(){phInput.removeAttribute("capture");phInput.click();});
-$("btnPhCam").addEventListener("click",function(){phInput.setAttribute("capture","environment");phInput.click();});
-$("btnPhDel").addEventListener("click",function(){
-  if(!cur.photo){toast("还没有照片");return;}
-  cur.photo=""; renderPhoto();
-});
-phInput.addEventListener("change",function(e){
-  var f=e.target.files&&e.target.files[0]; if(!f)return;
-  var fr=new FileReader();
-  fr.onload=function(ev){
-    var im=new Image();
-    im.onload=function(){
-      var max=800,w=im.width,h=im.height;
-      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
-      var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
-      cv.getContext("2d").drawImage(im,0,0,w,h);
-      cur.photo=cv.toDataURL("image/jpeg",0.75);
-      renderPhoto();
-    };
-    im.src=ev.target.result;
-  };
-  fr.readAsDataURL(f);
-  e.target.value="";
-});
-function renderPhoto(){
-  var p=$("phPrev");
-  p.innerHTML=cur.photo?'<img src="'+cur.photo+'" alt="照片">':"<span>无照片</span>";
 }
 
 /* ---------- 输入 ---------- */
@@ -440,17 +387,16 @@ $("btnSave").addEventListener("click",function(){
   if(!nm){toast("先写个品名");$("fName").focus();return;}
   var a=num(cur.amt);
   D.items.push({id:Date.now(),date:cur.date,cat:cur.cat,brand:(cur.brand||"").trim(),name:nm,
-                amt:a,ch:cur.ch||"",note:cur.note||"",photo:cur.photo||""});
+                amt:a,ch:cur.ch||"",note:cur.note||""});
   if(!save()){ D.items.pop(); render(); return; }
-  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo="";
+  cur.brand=""; cur.name=""; cur.amt=""; cur.note="";
   $("fBrand").value=""; $("fName").value=""; $("fAmt").value=""; $("fNote").value="";
-  render(); renderPhoto(); renderPicker();
+  render(); renderPicker();
   toast("已记 "+cur.cat+" ¥"+fmt(a));
 });
 $("btnClear").addEventListener("click",function(){
-  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo="";
-  $("fBrand").value=""; $("fName").value=""; $("fAmt").value=""; $("fNote").value="";
-  renderPhoto(); renderPicker();
+  cur.brand=""; cur.name=""; cur.amt=""; cur.note="";
+  $("fBrand").value=""; $("fName").value=""; $("fAmt").value=""; $("fNote").value=""; renderPicker();
 });
 
 /* ---------- 渲染 ---------- */
@@ -501,7 +447,6 @@ function render(){
     if(it.note)meta.push(it.note);
     return '<div class="item">'+
       '<span class="time">'+esc((it.date||"").slice(5))+'</span>'+
-      (it.photo?'<span class="ph"><img src="'+it.photo+'" alt=""></span>':'')+
       '<div class="info">'+
         '<div class="n"><i>'+esc(it.cat)+'</i>'+esc((it.brand?it.brand+" · ":"")+it.name)+'</div>'+
         (meta.length?'<div class="m">'+esc(meta.join(" · "))+'</div>':'')+
@@ -545,23 +490,8 @@ function textOf(){
 }
 
 /* ---------- 生成图片 ---------- */
-function loadImg(src){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im);};im.onerror=rej;im.src=src;});}
-function drawCover(x,im,dx,dy,dw,dh){
-  var r=Math.max(dw/im.width,dh/im.height), sw=dw/r, sh=dh/r;
-  var sx=(im.width-sw)/2, sy=(im.height-sh)/2;
-  x.save(); rrect(x,dx,dy,dw,dh,10); x.clip();
-  x.drawImage(im,sx,sy,sw,sh,dx,dy,dw,dh); x.restore();
-}
-function exportDay(){
-  var items=monItems(curMon).slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");});
-  var phItems=items.slice(0,14).filter(function(it){return it.photo;}).slice(0,6);
-  if(!phItems.length){ exportImg([]); return; }
-  Promise.all(phItems.map(function(it){
-    return loadImg(it.photo).then(function(im){return {im:im,it:it};}).catch(function(){return null;});
-  })).then(function(l){ exportImg(l.filter(Boolean)); });
-}
-function exportImg(IMGS){
-  IMGS=IMGS||[];
+function exportDay(){ exportImg(); }
+function exportImg(){
   var items=monItems(curMon).slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");});
   var st=statOf(items), aS=allStat();
   var keys=Object.keys(st.byCat).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
@@ -583,8 +513,6 @@ function exportImg(IMGS){
     if(it.note)a.push(it.note);
     return wrap(mx,a.join(" · "),"26px "+SER,IW-96).slice(0,2);
   });
-  var PER=5, PS=160, PGAP=14;
-  var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
   var P0=THEMES[TH]||THEMES.blue;
   var ink=P0.ink, mut=P0.muted, acc=P0.accent, line=P0.line, brd=P0.border;
 
@@ -665,23 +593,6 @@ function exportImg(IMGS){
   x.textAlign="left";
   y+=30;
 
-  if(phRows){
-    y+=10;
-    x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke();
-    y+=54;
-    x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center"; x.fillText("本 月 照 片",W/2,y); x.textAlign="left";
-    y+=42;
-    IMGS.forEach(function(o,i){
-      var r=Math.floor(i/PER), c=i%PER;
-      var px=M+c*(PS+PGAP), py=y+r*(PS+26+16);
-      drawCover(x,o.im,px,py,PS,PS);
-      x.strokeStyle=brd; x.lineWidth=1.5; rrect(x,px,py,PS,PS,10); x.stroke();
-      x.fillStyle=mut; x.font="20px "+SER;
-      x.fillText((o.it.date||"").slice(5)+"　"+o.it.cat,px,py+PS+22);
-    });
-    y += phRows*(PS+26+16);
-  }
-
   if(withFooter){
     x.fillStyle=P0.ph; x.font="22px "+SER; x.textAlign="center";
     x.fillText("Calme · 护肤消费　"+curMon,W/2,H-CY-40); x.textAlign="left";
@@ -736,7 +647,6 @@ $("ovShare").addEventListener("click",function(){
 });
 
 applyTheme(TH);
-renderPhoto();
 var moved=migrateFromSpend();
 /* 老版本遗留的字段已不再使用，顺手清掉 */
 (function(){
