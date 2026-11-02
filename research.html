@@ -73,23 +73,6 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .stats button[data-v="完成"].on{background:var(--ok); border-color:var(--ok); color:#fff;}
 .stats button[data-v="进行中"].on{background:var(--accent); border-color:var(--accent); color:#fff;}
 .stats button[data-v="卡住了"].on{background:var(--warn); border-color:var(--warn); color:#fff;}
-/* 照片 */
-.phBox{display:flex; gap:12px; align-items:flex-start;}
-.phPrev{
-  flex:0 0 96px; width:96px; height:96px; border-radius:10px; border:1.5px dashed var(--line);
-  background:var(--soft); display:flex; align-items:center; justify-content:center; overflow:hidden;
-  color:var(--ph); font-size:11.5px; text-align:center; line-height:1.5;
-}
-.phPrev img{width:100%; height:100%; object-fit:cover; display:block;}
-.phBtns{flex:1; display:flex; flex-direction:column; gap:8px;}
-.phBtns button{
-  font-family:inherit; font-size:14px; padding:9px 12px; border-radius:9px;
-  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2); width:100%;
-}
-.hintline{font-size:11.5px; color:var(--ph); line-height:1.6; margin-top:6px;}
-.item .ph{flex:0 0 44px; width:44px; height:44px; border-radius:8px; overflow:hidden;
-  border:1px solid var(--border); background:var(--soft); flex-shrink:0; align-self:center;}
-.item .ph img{width:100%; height:100%; object-fit:cover; display:block;}
 .actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
 .actions button{font-family:inherit; font-size:15px; letter-spacing:.06em; padding:12px 6px; border-radius:10px; border:1.5px solid var(--accent);}
 #btnSave{background:var(--accent); color:#fff;}
@@ -203,20 +186,6 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <input type="text" id="fBlock" placeholder="条带背景太深，明天先换封闭液试试">
   </div>
 
-  <div class="sec">
-    <label class="lab">照片（可不填）</label>
-    <div class="phBox">
-      <div class="phPrev" id="phPrev"><span>无照片</span></div>
-      <div class="phBtns">
-        <button id="btnPhCam" type="button">拍照</button>
-        <button id="btnPhPick" type="button">从相册选</button>
-        <button id="btnPhDel" type="button">清除照片</button>
-      </div>
-    </div>
-    <input type="file" id="phFile" accept="image/*" hidden>
-    <div class="hintline">拍下实验结果、仪器状态或数据截图，回头翻记录特别清楚。照片存在手机本地，不会上传。</div>
-  </div>
-
   <div class="actions">
     <button id="btnSave" type="button">记一笔</button>
     <button id="btnClear" type="button">清空输入</button>
@@ -279,6 +248,15 @@ function save(){
   catch(e){ toast("手机存储空间满了 · 去「数据备份」导出后删掉一些旧照片再试"); return false; }
 }
 var D=load();
+/* 照片功能已移除：清掉历史记录里残留的图片数据，腾出本地空间 */
+(function(){
+  var dirty=false;
+  (D.items||[]).forEach(function(it){
+    if(it.photo!==undefined){delete it.photo;dirty=true;}
+    if(it.photoRemoved!==undefined){delete it.photoRemoved;dirty=true;}
+  });
+  if(dirty){ try{ localStorage.setItem(LS,JSON.stringify(D)); }catch(e){} }
+})();
 
 /* ---------- 配色（米 / 蓝 / 绿） ---------- */
 var THEMES={
@@ -302,7 +280,7 @@ var TYPES=["实验","文献","分析","写作","组会","其他"];
 var TYPE_ICON={"实验":"●","文献":"■","分析":"▲","写作":"◆","组会":"★","其他":"○"};
 var STATUS=["完成","进行中","卡住了"];
 var ST_ICON={"完成":"✓","进行中":"◐","卡住了":"✕"};
-var cur={date:"",type:"实验",text:"",hrs:"",status:"进行中",block:"",photo:""};
+var cur={date:"",type:"实验",text:"",hrs:"",status:"进行中",block:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function shiftDate(s,n){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);d.setDate(d.getDate()+n);
   var p=function(x){return (x<10?"0":"")+x;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
@@ -332,51 +310,19 @@ function renderPick(){
   document.querySelectorAll("#stats button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.status);});
 }
 
-/* ---------- 照片 ---------- */
-var phInput=$("phFile");
-$("btnPhPick").addEventListener("click",function(){phInput.removeAttribute("capture");phInput.click();});
-$("btnPhCam").addEventListener("click",function(){phInput.setAttribute("capture","environment");phInput.click();});
-$("btnPhDel").addEventListener("click",function(){
-  if(!cur.photo){toast("还没有照片");return;}
-  cur.photo=""; renderPhoto();
-});
-phInput.addEventListener("change",function(e){
-  var f=e.target.files&&e.target.files[0]; if(!f)return;
-  var fr=new FileReader();
-  fr.onload=function(ev){
-    var im=new Image();
-    im.onload=function(){
-      var max=800,w=im.width,h=im.height;
-      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
-      var cv=document.createElement("canvas"); cv.width=w; cv.height=h;
-      cv.getContext("2d").drawImage(im,0,0,w,h);
-      cur.photo=cv.toDataURL("image/jpeg",0.75);
-      renderPhoto();
-    };
-    im.src=ev.target.result;
-  };
-  fr.readAsDataURL(f);
-  e.target.value="";
-});
-function renderPhoto(){
-  var p=$("phPrev");
-  p.innerHTML=cur.photo?'<img src="'+cur.photo+'" alt="照片">':"<span>无照片</span>";
-}
-
 /* ---------- 保存 ---------- */
 $("btnSave").addEventListener("click",function(){
   if(!cur.text.trim()){toast("先写一句做了什么");$("fText").focus();return;}
   D.items.push({id:Date.now(),date:cur.date,type:cur.type,text:cur.text.trim(),
-                hrs:num(cur.hrs)||0,status:cur.status,block:cur.block||"",photo:cur.photo||""});
+                hrs:num(cur.hrs)||0,status:cur.status,block:cur.block||""});
   if(!save()){ D.items.pop(); render(); return; }
-  cur.text=""; cur.hrs=""; cur.block=""; cur.photo="";
+  cur.text=""; cur.hrs=""; cur.block="";
   $("fText").value=""; $("fHrs").value=""; $("fBlock").value="";
-  render(); renderPhoto(); toast("已记一笔 "+cur.type+" · "+cur.status);
+  render(); toast("已记一笔 "+cur.type+" · "+cur.status);
 });
 $("btnClear").addEventListener("click",function(){
-  cur.text=""; cur.hrs=""; cur.block=""; cur.photo="";
+  cur.text=""; cur.hrs=""; cur.block="";
   $("fText").value=""; $("fHrs").value=""; $("fBlock").value="";
-  renderPhoto();
 });
 
 /* ---------- 统计 ---------- */
@@ -431,7 +377,6 @@ function render(){
         (it.block?'<div class="b">卡点：'+esc(it.block)+'</div>':'')+
         '</div>'+
         (it.hrs?'<span class="hrs">'+hrs1(it.hrs)+' h</span>':'')+
-        (it.photo?'<span class="ph"><img src="'+it.photo+'" alt=""></span>':'')+
         '<button class="del" data-i="'+idx+'">删</button></div>';
     });
     h+='</div>';
@@ -489,23 +434,8 @@ function wrap(x,t,font,maxW){
 function rrect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 var lastBlob=null;
 
-function loadImg(src){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im);};im.onerror=rej;im.src=src;});}
-function drawCover(x,im,dx,dy,dw,dh){
-  var r=Math.max(dw/im.width,dh/im.height), sw=dw/r, sh=dh/r;
-  var sx=(im.width-sw)/2, sy=(im.height-sh)/2;
-  x.save(); rrect(x,dx,dy,dw,dh,10); x.clip();
-  x.drawImage(im,sx,sy,sw,sh,dx,dy,dw,dh); x.restore();
-}
-function exportDay(){
-  var items=dayItems();
-  var phItems=items.filter(function(it){return it.photo;}).slice(0,6);
-  if(!phItems.length){ exportImg([]); return; }
-  Promise.all(phItems.map(function(it){
-    return loadImg(it.photo).then(function(im){return {im:im,it:it};}).catch(function(){return null;});
-  })).then(function(l){ exportImg(l.filter(Boolean)); });
-}
-function exportImg(IMGS){
-  IMGS=IMGS||[];
+function exportDay(){ exportImg(); }
+function exportImg(){
   var items=dayItems();
   var th=0,byType={},bySt={"完成":0,"进行中":0,"卡住了":0};
   items.forEach(function(it){
@@ -535,8 +465,6 @@ function exportImg(IMGS){
   });
   var blockItems=items.filter(function(it){return it.status==="卡住了"&&it.block;});
 
-  var PER=5, PS=160, PGAP=14;
-  var phRows=IMGS.length?Math.ceil(IMGS.length/PER):0;
   var P=THEMES[TH]||THEMES.blue;
   var ink=P.ink, mut=P.muted, acc=P.accent, line=P.line, brd=P.border, ok=P.ok, warn=P.warn;
 
@@ -631,24 +559,6 @@ function exportImg(IMGS){
       x.fillStyle=mut; x.font="24px "+SER; x.fillText(it.block,M,y+34);
       y+=72;
     });
-  }
-
-  /* 当日照片 */
-  if(phRows){
-    y+=10;
-    x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.moveTo(M,y); x.lineTo(M+IW,y); x.stroke();
-    y+=54;
-    x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center"; x.fillText("当 日 记 录",W/2,y); x.textAlign="left";
-    y+=42;
-    IMGS.forEach(function(o,i){
-      var r=Math.floor(i/PER), c=i%PER;
-      var px=M+c*(PS+PGAP), py=y+r*(PS+26+16);
-      drawCover(x,o.im,px,py,PS,PS);
-      x.strokeStyle=brd; x.lineWidth=1.5; rrect(x,px,py,PS,PS,10); x.stroke();
-      x.fillStyle=mut; x.font="20px "+SER;
-      x.fillText(o.it.type+"　"+ST_ICON[o.it.status],px,py+PS+22);
-    });
-    y += phRows*(PS+26+16);
   }
 
   if(withFooter){
