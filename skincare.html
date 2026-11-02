@@ -72,11 +72,6 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 .cats button{font-family:inherit; font-size:14.5px; padding:11px 3px; border-radius:9px;
   border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
 .cats button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
-/* 三格小按钮：状态 / 回购 */
-.mini{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
-.mini button{font-family:inherit; font-size:13.5px; padding:10px 2px; border-radius:9px;
-  border:1.5px solid var(--line); background:var(--soft); color:var(--ink2);}
-.mini button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
 /* 照片 */
 .phBox{display:flex; gap:12px; align-items:flex-start;}
 .phPrev{
@@ -163,7 +158,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 <div class="head">
   <div class="kicker">CALME · 护肤</div>
   <h1>护 肤 记 录</h1>
-  <div class="sub">买过什么、用得怎么样、要不要回购，<br>都记在这一张里。</div>
+  <div class="sub">护肤品花了多少，<br>都记在这一张里。</div>
 </div>
 <div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
 
@@ -210,43 +205,24 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
     <div class="hintline">赠品 / 小样不花钱的话，金额留空记 0 也能存。</div>
   </div>
 
-  <div class="sec grid2">
-    <div>
-      <label class="lab" for="fCh">渠道</label>
-      <select id="fCh">
-        <option value="">不填</option>
-        <option value="专柜">专柜</option>
-        <option value="官网">官网</option>
-        <option value="旗舰店">旗舰店</option>
-        <option value="免税店">免税店</option>
-        <option value="代购">代购</option>
-        <option value="超市/药妆">超市/药妆</option>
-        <option value="二手">二手</option>
-        <option value="其他">其他</option>
-      </select>
-    </div>
-    <div>
-      <label class="lab">状态</label>
-      <div class="mini" id="states">
-        <button data-v="未拆封" type="button">未拆封</button>
-        <button data-v="在用" type="button">在用</button>
-        <button data-v="空瓶" type="button">空瓶</button>
-      </div>
-    </div>
-  </div>
-
   <div class="sec">
-    <label class="lab">还会回购吗</label>
-    <div class="mini" id="rebuy">
-      <button data-v="会回购" type="button">会回购</button>
-      <button data-v="看情况" type="button">看情况</button>
-      <button data-v="不回购" type="button">不回购</button>
-    </div>
+    <label class="lab" for="fCh">渠道（可不填）</label>
+    <select id="fCh">
+      <option value="">不填</option>
+      <option value="专柜">专柜</option>
+      <option value="官网">官网</option>
+      <option value="旗舰店">旗舰店</option>
+      <option value="免税店">免税店</option>
+      <option value="代购">代购</option>
+      <option value="超市/药妆">超市/药妆</option>
+      <option value="二手">二手</option>
+      <option value="其他">其他</option>
+    </select>
   </div>
 
   <div class="sec">
     <label class="lab" for="fNote">备注（可不填）</label>
-    <input type="text" id="fNote" placeholder="肤感 / 用了多久 / 挤不挤得到">
+    <input type="text" id="fNote" placeholder="容量 / 色号 / 赠品小样">
   </div>
 
   <div class="sec">
@@ -260,7 +236,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
       </div>
     </div>
     <input type="file" id="phFile" accept="image/*" hidden>
-    <div class="hintline">拍空瓶、拍质地、拍小票都行。照片存在手机本地，不会上传。</div>
+    <div class="hintline">拍产品、拍小票都行。照片存在手机本地，不会上传。</div>
   </div>
 
   <div class="actions">
@@ -344,7 +320,7 @@ function applyTheme(t){
 }
 
 var CATS=["洁面","水","精华","面霜","防晒","面膜","彩妆","洗护","其他"];
-var cur={date:"",cat:"精华",brand:"",name:"",amt:"",ch:"",state:"在用",rebuy:"",note:"",photo:""};
+var cur={date:"",cat:"精华",brand:"",name:"",amt:"",ch:"",note:"",photo:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
 function fmt(n){var v=Math.round(n*100)/100;return v.toLocaleString("zh-CN");}
@@ -386,8 +362,7 @@ function migrateFromSpend(){
     if(had[src])return;
     D.items.push({
       id:it.id, src:src, date:it.date||today(), cat:guessCat(it.note), brand:"",
-      name:it.note||"护肤品", amt:it.amt||0, ch:"", state:"在用", rebuy:"",
-      note:"", photo:it.photo||""
+      name:it.note||"护肤品", amt:it.amt||0, ch:"", note:"", photo:it.photo||""
     });
     added++;
   });
@@ -401,15 +376,13 @@ function migrateFromSpend(){
 /* ---------- 数据 ---------- */
 function monItems(m){return D.items.filter(function(it){return (it.date||"").slice(0,7)===m;});}
 function statOf(list){
-  var sum=0,byCat={},days={},empty=0,rebuyN=0;
+  var sum=0,byCat={},days={};
   list.forEach(function(it){
     sum+=num(it.amt);
     byCat[it.cat]=(byCat[it.cat]||0)+num(it.amt);
     if(it.date)days[it.date]=1;
-    if(it.state==="空瓶")empty++;
-    if(it.rebuy==="会回购")rebuyN++;
   });
-  return {sum:sum,n:list.length,byCat:byCat,days:Object.keys(days).length,empty:empty,rebuy:rebuyN};
+  return {sum:sum,n:list.length,byCat:byCat,days:Object.keys(days).length};
 }
 function allStat(){return statOf(D.items);}
 function firstDateOf(list){
@@ -467,18 +440,8 @@ $("fNote").addEventListener("input",function(){cur.note=$("fNote").value;});
 $("cats").addEventListener("click",function(e){
   var b=e.target.closest("button"); if(!b)return; cur.cat=b.dataset.v; renderPicker();
 });
-$("states").addEventListener("click",function(e){
-  var b=e.target.closest("button"); if(!b)return; cur.state=b.dataset.v; renderPicker();
-});
-$("rebuy").addEventListener("click",function(e){
-  var b=e.target.closest("button"); if(!b)return;
-  cur.rebuy=(cur.rebuy===b.dataset.v)?"":b.dataset.v;   /* 再点一次取消 */
-  renderPicker();
-});
 function renderPicker(){
   document.querySelectorAll("#cats button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.cat);});
-  document.querySelectorAll("#states button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.state);});
-  document.querySelectorAll("#rebuy button").forEach(function(b){b.classList.toggle("on",b.dataset.v===cur.rebuy);});
 }
 
 /* ---------- 保存 ---------- */
@@ -487,16 +450,15 @@ $("btnSave").addEventListener("click",function(){
   if(!nm){toast("先写个品名");$("fName").focus();return;}
   var a=num(cur.amt);
   D.items.push({id:Date.now(),date:cur.date,cat:cur.cat,brand:(cur.brand||"").trim(),name:nm,
-                amt:a,ch:cur.ch||"",state:cur.state||"在用",rebuy:cur.rebuy||"",
-                note:cur.note||"",photo:cur.photo||""});
+                amt:a,ch:cur.ch||"",note:cur.note||"",photo:cur.photo||""});
   if(!save()){ D.items.pop(); render(); return; }
-  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo=""; cur.rebuy="";
+  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo="";
   $("fBrand").value=""; $("fName").value=""; $("fAmt").value=""; $("fNote").value="";
   render(); renderPhoto(); renderPicker();
   toast("已记 "+cur.cat+" ¥"+fmt(a));
 });
 $("btnClear").addEventListener("click",function(){
-  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo=""; cur.rebuy="";
+  cur.brand=""; cur.name=""; cur.amt=""; cur.note=""; cur.photo="";
   $("fBrand").value=""; $("fName").value=""; $("fAmt").value=""; $("fNote").value="";
   renderPhoto(); renderPicker();
 });
@@ -516,7 +478,7 @@ function render(){
   $("trio").innerHTML=
     '<div class="box"><div class="k">本月件数</div><div class="v">'+st.n+'</div></div>'+
     '<div class="box"><div class="k">累计花费</div><div class="v">¥'+fmt(aS.sum)+'</div></div>'+
-    '<div class="box"><div class="k">累计空瓶</div><div class="v">'+aS.empty+'</div></div>';
+    '<div class="box"><div class="k">累计件数</div><div class="v">'+aS.n+'</div></div>';
 
   var keys=Object.keys(st.byCat).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
   $("monBars").innerHTML=keys.length?keys.map(function(c){
@@ -545,8 +507,6 @@ function render(){
   }
   L.innerHTML=list.map(function(it){
     var meta=[];
-    if(it.state)meta.push(it.state);
-    if(it.rebuy)meta.push(it.rebuy);
     if(it.ch)meta.push(it.ch);
     if(it.note)meta.push(it.note);
     return '<div class="item">'+
@@ -583,7 +543,7 @@ function textOf(){
   if(mine.length){
     L.push("—— 明细 ——");
     mine.slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");}).forEach(function(it){
-      var extra=[]; if(it.state)extra.push(it.state); if(it.rebuy)extra.push(it.rebuy); if(it.ch)extra.push(it.ch);
+      var extra=[]; if(it.ch)extra.push(it.ch);
       L.push((it.date||"").slice(5)+" "+it.cat+" "+(it.brand?it.brand+" ":"")+it.name+" ¥"+fmt(it.amt)+
              (extra.length?"（"+extra.join(" · ")+"）":""));
     });
@@ -591,7 +551,6 @@ function textOf(){
   var fd=firstDateOf(D.items);
   L.push("—— 累计 ——");
   L.push("累计 ¥"+fmt(aS.sum)+"（共 "+aS.n+" 件"+((fd)?"，自 "+fd+" 起":"")+"）");
-  L.push("空瓶 "+aS.empty+" 件 · 会回购 "+aS.rebuy+" 件");
   return L.join("\n");
 }
 
@@ -630,8 +589,6 @@ function exportImg(IMGS){
   });
   var subs=rows.map(function(it){
     var a=[];
-    if(it.state)a.push(it.state);
-    if(it.rebuy)a.push(it.rebuy);
     if(it.ch)a.push(it.ch);
     if(it.note)a.push(it.note);
     return wrap(mx,a.join(" · "),"26px "+SER,IW-96).slice(0,2);
@@ -716,9 +673,6 @@ function exportImg(IMGS){
   x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
   x.fillText("累计 ¥"+fmt(aS.sum)+"（共 "+aS.n+" 件"+(first?"，自 "+first+" 起":"")+"）",W/2,y);
   x.textAlign="left";
-  y+=44;
-  x.fillStyle=mut; x.font="24px "+SER; x.textAlign="center";
-  x.fillText("空瓶 "+aS.empty+" 件 · 会回购 "+aS.rebuy+" 件",W/2,y); x.textAlign="left";
   y+=30;
 
   if(phRows){
@@ -794,6 +748,15 @@ $("ovShare").addEventListener("click",function(){
 applyTheme(TH);
 renderPhoto();
 var moved=migrateFromSpend();
+/* 老版本遗留的字段已不再使用，顺手清掉 */
+(function(){
+  var dirty=false;
+  D.items.forEach(function(it){
+    if(it.state!==undefined){delete it.state;dirty=true;}
+    if(it.rebuy!==undefined){delete it.rebuy;dirty=true;}
+  });
+  if(dirty) save();
+})();
 render();
 if(moved>0){ toast("已从当日消费移入 "+moved+" 笔美妆护肤记录"); }
 </script>
