@@ -162,7 +162,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
   <h1>当 日 消 费 卡</h1>
   <div class="sub">一天结束前随手记几笔，<br>看看钱都花在了哪儿。</div>
 </div>
-<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="skincare.html">护肤记录</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
 
 <div class="card">
   <div class="sec">
@@ -188,8 +188,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
       <button data-v="探店" type="button">探店</button>
       <button data-v="交通" type="button">交通</button>
       <button data-v="购物" type="button">购物</button>
-      <button data-v="美妆护肤" type="button">美妆护肤</button>
-      <button data-v="其他" type="button" style="grid-column:span 3;">其他</button>
+      <button data-v="其他" type="button">其他</button>
     </div>
   </div>
 
@@ -276,7 +275,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 </div>
 
 <div class="quote">钱花得明白，比花得省更让人安心。</div>
-<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
+<div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="skincare.html">护肤记录</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
 
 <div id="ov">
   <img id="ovImg" alt="当日消费卡图片">
@@ -314,13 +313,15 @@ function applyTheme(t){
   document.documentElement.setAttribute("data-theme",t==="warm"?"":t);
 }
 
-var CATS=["吃饭","咖啡","探店","交通","购物","美妆护肤","其他"];
+var CATS=["吃饭","咖啡","探店","交通","购物","其他"];
 var cur={date:"",amt:"",cat:"吃饭",time:"",note:"",photo:""};
 function today(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function nowHM(){var d=new Date(),p=function(n){return (n<10?"0":"")+n;};return p(d.getHours())+":"+p(d.getMinutes());}
 function shiftDate(s,n){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);d.setDate(d.getDate()+n);
   var p=function(x){return (x<10?"0":"")+x;};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+/* 分类条：按实际出现的分类排序（兼容历史数据里的旧分类） */
+function catKeys(m){return Object.keys(m).filter(function(k){return m[k];}).sort(function(a,b){return m[b]-m[a];});}
 function fmt(n){var v=Math.round(n*100)/100;return v.toLocaleString("zh-CN");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function toast(t){var el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1800);}
@@ -378,7 +379,7 @@ function renderCats(){
 }
 function renderWarn(){
   var el=$("shopWarn");
-  var BIG=["购物","美妆护肤"];
+  var BIG=["购物"];
   if(BIG.indexOf(cur.cat)>=0&&num(cur.amt)>=1000){
     el.style.display="";
     el.innerHTML='⚠️ 这笔'+cur.cat+' ≥¥1,000，建议先去 <a href="index.html" style="color:var(--warn)">填 72h 心愿卡</a> 冷静一下。';
@@ -429,7 +430,7 @@ function renderMonth(){
     ? ("共 "+st.n+" 笔 · "+st.days+" 天有记录 · 日均 ¥"+fmt(st.sum/Math.max(1,passed)))
     : (curMon+" 还没有记录");
 
-  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  var bars=catKeys(st.byCat);
   $("monBars").innerHTML=bars.length?bars.map(function(c){
     var pct=st.sum?Math.round(st.byCat[c]/st.sum*100):0;
     return '<div class="bar"><span class="n">'+c+'</span>'+
@@ -464,7 +465,7 @@ function textOfMonth(){
   var st=monStat(curMon), L=[];
   L.push("月度账单 · "+curMon);
   L.push("本月合计 ¥"+fmt(st.sum)+"（"+st.n+" 笔 / "+st.days+" 天）");
-  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  var bars=catKeys(st.byCat);
   if(bars.length){L.push("—— 分类 ——");
     bars.forEach(function(c){
       L.push(c+" ¥"+fmt(st.byCat[c])+"（"+(st.sum?Math.round(st.byCat[c]/st.sum*100):0)+"%）");
@@ -480,7 +481,7 @@ function textOfMonth(){
 }
 function exportMonthImg(){
   var st=monStat(curMon);
-  var bars=CATS.filter(function(c){return st.byCat[c];}).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
+  var bars=catKeys(st.byCat);
   var n=daysIn(curMon);
   var W=1080, CX=60, CY=60, M=CX+44, IW=W-M*2;
   var SER='"Songti SC","STSongti-SC-Regular","Noto Serif SC",serif';
@@ -577,7 +578,7 @@ function render(){
   $("cnt").textContent=items.length?("共 "+items.length+" 笔 · "+cur.date):(cur.date+" 还没有记录");
   $("listCount").textContent=items.length?("共 "+items.length+" 笔"):"";
 
-  var bars=CATS.filter(function(c){return byCat[c];}).sort(function(a,b){return byCat[b]-byCat[a];});
+  var bars=catKeys(byCat);
   $("bars").innerHTML=bars.length?bars.map(function(c){
     var pct=sum?Math.round(byCat[c]/sum*100):0;
     return '<div class="bar"><span class="n">'+c+'</span>'+
@@ -616,7 +617,7 @@ function textOf(){
   var L=[];
   L.push("当日消费 · "+cur.date);
   L.push("合计 ¥"+fmt(sum)+"（"+items.length+" 笔）");
-  var bars=CATS.filter(function(c){return byCat[c];}).sort(function(a,b){return byCat[b]-byCat[a];});
+  var bars=catKeys(byCat);
   if(bars.length)L.push("—— 分类 ——");
   bars.forEach(function(c){L.push(c+" ¥"+fmt(byCat[c]));});
   if(items.length){
@@ -659,7 +660,7 @@ function exportImg(IMGS){
   var items=dayItems().slice().sort(function(a,b){return (a.time||"").localeCompare(b.time||"");});
   var sum=0,byCat={};
   items.forEach(function(it){sum+=it.amt;byCat[it.cat]=(byCat[it.cat]||0)+it.amt;});
-  var bars=CATS.filter(function(c){return byCat[c];}).sort(function(a,b){return byCat[b]-byCat[a];});
+  var bars=catKeys(byCat);
   var rows=items.slice(0,14);
   var extra=items.length-rows.length;
 
