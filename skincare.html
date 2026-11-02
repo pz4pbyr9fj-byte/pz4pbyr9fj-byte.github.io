@@ -207,17 +207,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 
   <div class="sec">
     <label class="lab" for="fCh">渠道（可不填）</label>
-    <select id="fCh">
-      <option value="">不填</option>
-      <option value="专柜">专柜</option>
-      <option value="官网">官网</option>
-      <option value="旗舰店">旗舰店</option>
-      <option value="免税店">免税店</option>
-      <option value="代购">代购</option>
-      <option value="超市/药妆">超市/药妆</option>
-      <option value="二手">二手</option>
-      <option value="其他">其他</option>
-    </select>
+    <input type="text" id="fCh" placeholder="专柜 / 免税店 / 代购 / 朋友带的">
   </div>
 
   <div class="sec">
@@ -435,7 +425,7 @@ $("btnThisMon").addEventListener("click",function(){curMon=today().slice(0,7);re
 $("fBrand").addEventListener("input",function(){cur.brand=$("fBrand").value;});
 $("fName").addEventListener("input",function(){cur.name=$("fName").value;});
 $("fAmt").addEventListener("input",function(){cur.amt=$("fAmt").value;});
-$("fCh").addEventListener("change",function(){cur.ch=$("fCh").value;});
+$("fCh").addEventListener("input",function(){cur.ch=$("fCh").value;});
 $("fNote").addEventListener("input",function(){cur.note=$("fNote").value;});
 $("cats").addEventListener("click",function(e){
   var b=e.target.closest("button"); if(!b)return; cur.cat=b.dataset.v; renderPicker();
