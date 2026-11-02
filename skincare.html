@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="护肤记录">
+<meta name="apple-mobile-web-app-title" content="护肤消费">
 <meta name="theme-color" content="#EEF3F8">
-<title>护肤记录</title>
+<title>护肤消费</title>
 <style>
 :root{
   --ink:#3A3630; --ink2:#4A443C; --muted:#5C574E;
@@ -157,7 +157,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 
 <div class="head">
   <div class="kicker">CALME · 护肤</div>
-  <h1>护 肤 记 录</h1>
+  <h1>护 肤 消 费</h1>
   <div class="sub">护肤品花了多少，<br>都记在这一张里。</div>
 </div>
 <div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
@@ -272,7 +272,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 
 <div class="card">
   <div class="actions" style="margin-top:0; grid-template-columns:1fr;">
-    <button id="btnExport" type="button" style="background:var(--accent); color:#fff;">生成护肤记录图片</button>
+    <button id="btnExport" type="button" style="background:var(--accent); color:#fff;">生成护肤消费图片</button>
   </div>
   <div class="actions" style="grid-template-columns:1fr;">
     <button id="btnText" type="button" style="background:#fff; color:var(--accent);">复制文字版</button>
@@ -283,7 +283,7 @@ input::placeholder,textarea::placeholder{color:var(--ph);}
 <div class="nav"><a href="index.html">心愿卡</a><a href="record.html">种草记录</a><a href="spend.html">当日消费</a><a href="food.html">每日饮食</a><a href="research.html">当日科研</a><a href="todo.html">想做的事</a><a href="parents.html?p=waipo">外婆消费</a><a href="parents.html?p=waigong">外公消费</a><a href="backup.html">数据备份</a></div>
 
 <div id="ov">
-  <img id="ovImg" alt="护肤记录图片">
+  <img id="ovImg" alt="护肤消费图片">
   <div class="tip">长按图片 → 存入照片 / 发给闺蜜</div>
   <div class="row">
     <button id="ovShare" type="button">分享…</button>
@@ -533,7 +533,7 @@ $("list").addEventListener("click",function(e){
 function textOf(){
   var mine=monItems(curMon), st=statOf(mine), aS=allStat();
   var L=[];
-  L.push("护肤记录 · "+curMon);
+  L.push("护肤消费 · "+curMon);
   L.push("本月 ¥"+fmt(st.sum)+"（"+st.n+" 件"+(st.n?" · 平均 ¥"+fmt(st.sum/st.n):"")+"）");
   var keys=Object.keys(st.byCat).sort(function(a,b){return st.byCat[b]-st.byCat[a];});
   if(keys.length){
@@ -608,7 +608,7 @@ function exportImg(IMGS){
   x.strokeStyle=brd; x.lineWidth=2; rrect(x,CX,CY,CW,CH,24); x.stroke();
 
   var y=CY+104;
-  x.fillStyle=ink; x.font="700 52px "+SER; x.textAlign="center"; x.fillText("护 肤 记 录",W/2,y); x.textAlign="left";
+  x.fillStyle=ink; x.font="700 52px "+SER; x.textAlign="center"; x.fillText("护 肤 消 费",W/2,y); x.textAlign="left";
   y+=50;
   x.fillStyle=mut; x.font="26px "+SER; x.textAlign="center";
   x.fillText(curMon.split("-")[0]+" 年 "+(+curMon.split("-")[1])+" 月",W/2,y); x.textAlign="left";
@@ -694,7 +694,7 @@ function exportImg(IMGS){
 
   if(withFooter){
     x.fillStyle=P0.ph; x.font="22px "+SER; x.textAlign="center";
-    x.fillText("Calme · 护肤记录　"+curMon,W/2,H-CY-40); x.textAlign="left";
+    x.fillText("Calme · 护肤消费　"+curMon,W/2,H-CY-40); x.textAlign="left";
   }
   return y;
   }
@@ -737,10 +737,10 @@ $("btnText").addEventListener("click",function(){ copyText(textOf()); });
 $("ovClose").addEventListener("click",function(){$("ov").classList.remove("show");});
 $("ovShare").addEventListener("click",function(){
   if(!lastBlob)return;
-  var f=new File([lastBlob],"护肤记录-"+curMon+".png",{type:"image/png"});
+  var f=new File([lastBlob],"护肤消费-"+curMon+".png",{type:"image/png"});
   if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});}
   else{
-    var a=document.createElement("a"); a.href=URL.createObjectURL(lastBlob); a.download="护肤记录-"+curMon+".png";
+    var a=document.createElement("a"); a.href=URL.createObjectURL(lastBlob); a.download="护肤消费-"+curMon+".png";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 });
